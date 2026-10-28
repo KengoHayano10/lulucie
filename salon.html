@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lulucie Salon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  /* Layout: salon counter tool — client list on the left, the open chart on the right; stacks to one column on phones */
+  :root {
+    --bg: #FBF9F6; --surface: #FFFFFF; --panel: #F3EFE8; --ink: #2B2A28; --stone: #6F6A63;
+    --line: rgba(43,42,40,.13); --sage: #5E7064; --sage-soft: #E4EAE5; --champagne: #8F7149; --champagne-soft: #F1E8DA;
+    --rose: #A2655D; --rose-soft: #F4E4E1; --on-ink: #FBF9F6;
+    --display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --body: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #1B1C1A; --surface: #242522; --panel: #2C2D2A; --ink: #ECE8E1; --stone: #ABA59C;
+    --line: rgba(236,232,225,.15); --sage: #A5BAAB; --sage-soft: #2F3832; --champagne: #D5BC92; --champagne-soft: #3A3328;
+    --rose: #D69488; --rose-soft: #3B2926; --on-ink: #1B1C1A; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #1B1C1A; --surface: #242522; --panel: #2C2D2A; --ink: #ECE8E1; --stone: #ABA59C;
+    --line: rgba(236,232,225,.15); --sage: #A5BAAB; --sage-soft: #2F3832; --champagne: #D5BC92; --champagne-soft: #3A3328;
+    --rose: #D69488; --rose-soft: #3B2926; --on-ink: #1B1C1A; color-scheme: dark }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.7; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 64px;
+          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; text-wrap: balance; }
+  .eyebrow { font-size: .72rem; letter-spacing: .22em; color: var(--champagne); text-transform: uppercase; margin: 0; }
+  .muted { color: var(--stone); }
+  .small { font-size: .85rem; }
+
+  /* top bar */
+  .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px;
+         border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+  .brand h1 { font-size: 1.7rem; font-style: italic; letter-spacing: .02em; }
+  .brand p { margin: 0; font-size: .85rem; color: var(--stone); }
+  nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  nav button { border: 1px solid transparent; background: none; padding: 6px 14px; border-radius: 999px; cursor: pointer; color: var(--stone); }
+  nav button[aria-current="page"] { background: var(--ink); color: var(--on-ink); }
+  nav button:hover:not([aria-current="page"]) { border-color: var(--line); color: var(--ink); }
+
+  .notice { margin-top: 14px; padding: 10px 14px; border-radius: 10px; background: var(--champagne-soft); font-size: .88rem; }
+  .notice.warn { background: var(--rose-soft); }
+
+  /* buttons and fields */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 9px 18px;
+         border: 1px solid var(--ink); background: var(--ink); color: var(--on-ink); cursor: pointer; font-weight: 500; }
+  .btn.outline { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.outline:hover { border-color: var(--ink); }
+  .btn.quiet { background: transparent; border-color: transparent; color: var(--stone); padding-inline: 10px; }
+  .btn.danger { background: transparent; color: var(--rose); border-color: var(--rose); }
+  .btn.small { padding: 5px 12px; font-size: .85rem; }
+  label.field, div.field { display: grid; gap: 4px; }
+  label.field > span { font-size: .82rem; color: var(--stone); }
+  input[type=text], input[type=url], input[type=date], input[type=number], input[type=search], select, textarea {
+    width: 100%; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 11px; }
+  input:disabled { opacity: .45; }
+  textarea { resize: vertical; min-height: 76px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .hint { font-size: .8rem; color: var(--stone); margin: 0; }
+  .error { color: var(--rose); font-size: .85rem; margin: 0; }
+  .error:empty { display: none; }
+
+  /* clients layout */
+  .layout { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: 28px; margin-top: 22px; align-items: start; }
+  @media (max-width: 820px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .list { display: grid; gap: 8px; }
+  .list-head { display: grid; gap: 10px; margin-bottom: 10px; }
+  .client { text-align: left; width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius);
+            padding: 12px 14px; cursor: pointer; display: grid; gap: 2px; }
+  .client[aria-current="true"] { border-color: var(--sage); background: var(--sage-soft); }
+  .client strong { font-family: var(--display); font-weight: 500; font-size: 1.05rem; }
+  .pill { display: inline-block; font-family: var(--body); font-size: .7rem; letter-spacing: 0; text-transform: none; padding: 0 8px;
+          border-radius: 999px; border: 1px solid var(--line); color: var(--stone); vertical-align: middle; line-height: 1.6; }
+  .pill.sample { border-color: var(--champagne); color: var(--champagne); }
+
+  .chart { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: grid; gap: 24px; min-width: 0; }
+  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .chart-head h2 { font-size: 1.6rem; }
+  section.block { display: grid; gap: 10px; }
+  section.block h3 { font-size: 1.05rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 3px 12px; cursor: pointer; font-size: .88rem; }
+  .tag[aria-pressed="true"] { background: var(--sage-soft); border-color: var(--sage); }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: baseline; }
+  .timeline li:first-child { border-top: none; }
+  .timeline time { font-variant-numeric: tabular-nums; color: var(--stone); font-size: .9rem; }
+  @media (max-width: 480px) { .timeline li { grid-template-columns: minmax(0, 1fr) auto; } .timeline time { grid-column: 1 / -1; } }
+  .empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 22px; text-align: center; color: var(--stone); }
+
+  /* visit form */
+  .visit { border: 1px solid var(--sage); border-radius: 16px; padding: 18px; display: grid; gap: 16px; }
+  .care-row { display: grid; grid-template-columns: 8em 5.5em minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+  @media (max-width: 560px) { .care-row { grid-template-columns: 1fr 1fr; } .care-row input[type=text] { grid-column: 1 / -1; } }
+  .to-customer { background: var(--panel); border-radius: var(--radius); padding: 16px; display: grid; gap: 14px; }
+
+  /* menus page */
+  .menus { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; margin-top: 18px; }
+  .menu-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 12px; align-content: start; }
+  .menu-card header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .menu-card h3 { font-size: 1.15rem; }
+  .page { margin-top: 22px; display: grid; gap: 18px; max-width: 720px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 14px; }
+
+  /* QR dialog */
+  .overlay { position: fixed; inset: 0; background: rgba(20,20,18,.55); display: grid; place-items: center; z-index: 20;
+             padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  .dialog { background: var(--surface); border-radius: 20px; max-width: 520px; width: 100%; max-height: 100%; overflow: auto; padding: 24px; display: grid; gap: 12px; }
+  .qr-box { background: #FFFFFF; border-radius: 12px; padding: 10px; display: grid; place-items: center; }
+  .qr-box svg { width: min(100%, 380px); height: auto; display: block; }
+  .steps { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+           background: var(--ink); color: var(--on-ink); padding: 10px 18px; border-radius: 999px; z-index: 30; font-size: .9rem; max-width: calc(100% - 32px); }
+  @media (prefers-reduced-motion: no-preference) { .toast { animation: rise .25s ease-out; } @keyframes rise { from { transform: translate(-50%, 8px); opacity: 0; } } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">for estheticians</p>
+      <h1>Lulucie Salon</h1>
+      <p id="salonLine">お客様カルテと、お客様アプリへのお渡し</p>
+    </div>
+    <nav aria-label="画面">
+      <button type="button" data-view="clients">お客様</button>
+      <button type="button" data-view="menus">メニューとケア案内</button>
+      <button type="button" data-view="salon">サロン情報</button>
+      <button type="button" data-view="data">データ</button>
+    </nav>
+  </header>
+  <div id="storageNotice" class="notice warn" hidden></div>
+  <main id="main"></main>
+</div>
+<div id="overlayRoot"></div>
+<div id="toastRoot" aria-live="polite"></div>
+
+<script>
+'use strict';
+const STORAGE_KEY = 'lulucie-salon-v1';
+// お客様アプリ（MenuCatalog）と同じ ID。標準メニューは ID で、それ以外は名前で照合される
+const BUILTIN_MENUS = [
+  ['builtin.hydraFacial', '毛穴ハイドラフェイシャル'], ['builtin.herbPeeling', 'ハーブピーリング'],
+  ['builtin.hifu', 'ハイフ'], ['builtin.corugi', '小顔コルギ'], ['builtin.medicalHairRemoval', '医療脱毛'],
+  ['builtin.salonHairRemoval', 'サロン脱毛'], ['builtin.lashPerm', 'まつ毛パーマ'], ['builtin.browSalon', '眉サロン'],
+];
+const DEFAULT_TAGS = ['強め圧が好き', '会話控えめ希望', 'ラベンダーの香り', '敏感肌・赤み出やすい', 'ハーブティー好き'];
+const CARE_KINDS = [['d', '当日'], ['p', '期間'], ['o', '次回まで']];
+const LIMIT = { name: 40, text: 80, message: 200, note: 300, care: 10 };
+
+// ---------- 日付・ID ----------
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function addDays(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+function uuid() {
+  if (crypto.randomUUID) return crypto.randomUUID().toUpperCase();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`.toUpperCase();
+}
+
+// ---------- 保存（このブラウザの中だけ） ----------
+let storageOK = true;
+function emptyState() {
+  return {
+    v: 1,
+    profile: { salonName: '', staffName: '', bookingURL: '', perk: '' },
+    menus: BUILTIN_MENUS.map(([id, name]) => ({ id, name, builtin: true, archived: false, interval: null, follow: null, care: [] })),
+    tags: DEFAULT_TAGS.slice(),
+    clients: [],
+  };
+}
+// 初回だけ、画面確認用の架空のお客様を入れる（データ画面からまとめて削除できる）
+function sampleClients() {
+  const t = today();
+  const visit = (menuId, menuName, days, note = '') => ({ id: uuid(), menuId, menuName, date: addDays(t, days), note, url: null });
+  return [
+    { id: uuid(), name: '佐藤 美咲', isSample: true, tags: ['ラベンダーの香り', 'ハーブティー好き'], memo: '来月ハワイ旅行。日焼けが気になるとのこと。',
+      visits: [visit('builtin.hydraFacial', '毛穴ハイドラフェイシャル', -56), visit('builtin.hydraFacial', '毛穴ハイドラフェイシャル', -28, '小鼻の毛穴が気になる')] },
+    { id: uuid(), name: '田中 彩', isSample: true, tags: ['会話控えめ希望', '敏感肌・赤み出やすい'], memo: 'お仕事が繁忙期。施術中はゆっくり休みたい。',
+      visits: [visit('builtin.herbPeeling', 'ハーブピーリング', -14)] },
+    { id: uuid(), name: '山本 結衣', isSample: true, tags: ['強め圧が好き'], memo: '推しのライブ前にフェイスラインを整えたい。',
+      visits: [visit('builtin.corugi', '小顔コルギ', -40), visit('builtin.hifu', 'ハイフ', -10)] },
+  ];
+}
+function normalize(s) {
+  if (!s || typeof s !== 'object' || s.v !== 1 || !Array.isArray(s.clients) || !Array.isArray(s.menus)) throw new Error('format');
+  s.profile = Object.assign({ salonName: '', staffName: '', bookingURL: '', perk: '' }, s.profile || {});
+  const ids = new Set(s.menus.map(m => m.id));
+  for (const [id, name] of BUILTIN_MENUS) if (!ids.has(id)) s.menus.push({ id, name, builtin: true, archived: false, interval: null, follow: null, care: [] });
+  s.menus.forEach(m => { m.care = Array.isArray(m.care) ? m.care : []; });
+  s.tags = Array.isArray(s.tags) ? s.tags : DEFAULT_TAGS.slice();
+  s.clients.forEach(c => { c.tags = Array.isArray(c.tags) ? c.tags : []; c.visits = Array.isArray(c.visits) ? c.visits : []; c.memo = c.memo || ''; });
+  return s;
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return normalize(JSON.parse(raw));
+  } catch (e) {
+    storageOK = false;
+  }
+  const s = emptyState();
+  s.clients = sampleClients();
+  return s;
+}
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    storageOK = true;
+  } catch (e) {
+    storageOK = false;
+  }
+  renderStorageNotice();
+}
+
+let state = load();
+const ui = { view: 'clients', clientId: null, query: '', visitOpen: false };
+try { const v = localStorage.getItem(STORAGE_KEY + ':view'); if (['clients', 'menus', 'salon', 'data'].includes(v)) ui.view = v; } catch (e) {}
+
+// ---------- 共通 ----------
+const $ = (sel, root = document) => root.querySelector(sel);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const menuById = id => state.menus.find(m => m.id === id);
+const clientById = id => state.clients.find(c => c.id === id);
+function dateLabel(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  const w = '日月火水木金土'[new Date(y, m - 1, d).getDay()];
+  return `${y}.${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}（${w}）`;
+}
+function toast(text) {
+  const root = $('#toastRoot');
+  root.innerHTML = `<div class="toast">${esc(text)}</div>`;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { root.innerHTML = ''; }, 2600);
+}
+function validURL(u) {
+  if (!u) return true;
+  try { const x = new URL(u); return x.protocol === 'https:' && !!x.host; } catch (e) { return false; }
+}
+function intOrNull(v, min, max) {
+  if (v === '' || v == null) return null;
+  const n = Number(v);
+  return Number.isInteger(n) && n >= min && n <= max ? n : NaN;
+}
+function renderStorageNotice() {
+  const el = $('#storageNotice');
+  el.hidden = storageOK;
+  if (!storageOK) el.textContent = 'このブラウザでは保存できない状態です（プライベートブラウズやサイトデータのブロックなど）。ページを閉じると入力内容が消えます。「データ」から書き出して保管してください。';
+}
+
+// ---------- QRコード ----------
+function b64url(bytes) {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+// お客様アプリ（SalonHandoffCodec）と同じ形。JSON を raw deflate で縮め、lulucie://receive?d= に入れる
+async function encodeHandoff(obj) {
+  const json = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream !== 'undefined') {
+    try {
+      const cs = new CompressionStream('deflate-raw');
+      const buf = await new Response(new Blob([json]).stream().pipeThrough(cs)).arrayBuffer();
+      return 'lulucie://receive?d=' + b64url(new Uint8Array(buf));
+    } catch (e) { /* 圧縮できないブラウザは j= で渡す */ }
+  }
+  return 'lulucie://receive?j=' + b64url(json);
+}
+function qrSVG(text) {
+  if (typeof qrcode === 'undefined') return null;
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount(), q = 4;
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c + q} ${r + q}h1v1h-1z`;
+  // 読み取りやすさのため、テーマにかかわらず白地に黒で描く
+  return `<svg viewBox="0 0 ${n + q * 2} ${n + q * 2}" role="img" aria-label="お客様アプリで読み取るQRコード" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#FFFFFF"/><path d="${d}" fill="#1B1B1A"/></svg>`;
+}
+
+function showQR(client, visit) {
+  const svg = qrSVG(visit.url);
+  const root = $('#overlayRoot');
+  const opener = document.activeElement;
+  root.innerHTML = `
+    <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+      <div class="dialog">
+        <p class="eyebrow">hand over</p>
+        <h2 id="qrTitle">${esc(client.name)} 様へお渡し</h2>
+        <p class="muted small" style="margin:0">${esc(visit.menuName)}・${dateLabel(visit.date)}</p>
+        <div class="qr-box">${svg || '<p class="error">QRコードを作る部品を読み込めませんでした。通信の状態を確認して、ページを開き直してください。</p>'}</div>
+        <ol class="steps small">
+          <li>お客様の iPhone で Lulucie を開き、ホームの「サロンから受け取る」を押してもらいます。</li>
+          <li>このQRコードを枠に入れて読み取ると、内容の確認画面が出ます。</li>
+          <li>お客様が「受け取る」を押すと、施術記録・次回の目安・ケア案内が届きます。</li>
+        </ol>
+        <p class="hint">iPhone のカメラアプリで読み取っても開けます。Lulucie が入っていない場合は、先に App Store から入れてもらってください。このQRコードは、施術履歴の「QRを表示」からもう一度出せます。</p>
+        <div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="closeQR">閉じる</button></div>
+      </div>
+    </div>`;
+  const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); opener?.focus?.(); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  $('#closeQR').addEventListener('click', close);
+  $('.overlay').addEventListener('click', e => { if (e.target.classList.contains('overlay')) close(); });
+  $('#closeQR').focus();
+}
+
+// ---------- 画面 ----------
+function setView(view) {
+  ui.view = view;
+  ui.visitOpen = false;
+  try { localStorage.setItem(STORAGE_KEY + ':view', view); } catch (e) {}
+  render();
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+function render() {
+  document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-current', b.dataset.view === ui.view ? 'page' : 'false'));
+  const p = state.profile;
+  $('#salonLine').textContent = p.salonName ? `${p.salonName}${p.staffName ? '・' + p.staffName : ''}` : 'お客様カルテと、お客様アプリへのお渡し';
+  const main = $('#main');
+  if (ui.view === 'menus') main.innerHTML = menusView();
+  else if (ui.view === 'salon') main.innerHTML = salonView();
+  else if (ui.view === 'data') main.innerHTML = dataView();
+  else main.innerHTML = clientsView();
+  bind();
+}
+
+// --- お客様 ---
+function lastVisit(c) { return c.visits.slice().sort((a, b) => b.date.localeCompare(a.date))[0]; }
+function clientsView() {
+  const q = ui.query.trim();
+  const list = state.clients
+    .filter(c => !q || c.name.includes(q) || c.tags.some(t => t.includes(q)))
+    .sort((a, b) => (lastVisit(b)?.date || '').localeCompare(lastVisit(a)?.date || ''));
+  if (!ui.clientId || !clientById(ui.clientId)) ui.clientId = list[0]?.id || null;
+  const items = list.map(c => {
+    const lv = lastVisit(c);
+    return `<button type="button" class="client" data-client="${c.id}" aria-current="${c.id === ui.clientId}">
+      <strong>${esc(c.name)} 様 ${c.isSample ? '<span class="pill sample">サンプル</span>' : ''}</strong>
+      <span class="muted small">${lv ? `${esc(lv.menuName)}・${dateLabel(lv.date)}` : 'まだ来店記録がありません'}</span>
+    </button>`;
+  }).join('');
+  const c = clientById(ui.clientId);
+  return `<div class="layout">
+    <aside>
+      <div class="list-head">
+        <form id="addClient" class="row" autocomplete="off">
+          <input type="text" id="newClientName" maxlength="${LIMIT.name}" placeholder="お名前（例：鈴木 花子）" aria-label="新しいお客様のお名前" style="flex:1">
+          <button class="btn" type="submit">追加</button>
+        </form>
+        <input type="search" id="search" value="${esc(ui.query)}" placeholder="お名前・タグで探す" aria-label="お客様を探す">
+      </div>
+      <div class="list">${items || `<div class="empty">${q ? '見つかりませんでした。' : 'お客様がまだいません。上の欄からお名前を追加してください。'}</div>`}</div>
+    </aside>
+    ${c ? chartView(c) : '<div class="chart"><div class="empty">左のリストからお客様を選ぶか、新しく追加してください。</div></div>'}
+  </div>`;
+}
+
+function chartView(c) {
+  const visits = c.visits.slice().sort((a, b) => b.date.localeCompare(a.date));
+  const lv = visits[0];
+  const tagButtons = state.tags.map(t => `<button type="button" class="tag" data-tag="${esc(t)}" aria-pressed="${c.tags.includes(t)}">${esc(t)}</button>`).join('');
+  const timeline = visits.map(v => `<li>
+      <time datetime="${v.date}">${dateLabel(v.date)}</time>
+      <div><div>${esc(v.menuName)}</div>${v.note ? `<div class="muted small">${esc(v.note)}</div>` : ''}</div>
+      <div>${v.url ? `<button type="button" class="btn outline small" data-qr="${v.id}">QRを表示</button>` : ''}</div>
+    </li>`).join('');
+  return `<article class="chart" aria-labelledby="chartName">
+    <div class="chart-head">
+      <div>
+        <p class="eyebrow">client chart ${c.isSample ? '<span class="pill sample">サンプル</span>' : ''}</p>
+        <h2 id="chartName">${esc(c.name)} 様</h2>
+        <p class="muted small" style="margin:0">来店 ${c.visits.length}回${lv ? `・前回 ${dateLabel(lv.date)}` : ''}</p>
+      </div>
+      <div class="row">
+        ${ui.visitOpen ? '' : '<button type="button" class="btn" id="openVisit">今日の施術を記録してお渡し</button>'}
+        <button type="button" class="btn quiet small" id="renameClient">名前を変更</button>
+        <button type="button" class="btn quiet small" id="deleteClient">削除</button>
+      </div>
+    </div>
+    <div id="deleteConfirm" class="notice warn" hidden>
+      <p style="margin:0 0 8px">${esc(c.name)} 様のカルテを削除します。来店履歴とメモも消え、元に戻せません。</p>
+      <div class="row"><button type="button" class="btn danger small" id="deleteYes">削除する</button><button type="button" class="btn outline small" id="deleteNo">やめる</button></div>
+    </div>
+    ${ui.visitOpen ? visitForm(c) : ''}
+    <section class="block">
+      <h3>お好み</h3>
+      <div class="tags">${tagButtons}</div>
+      <form id="addTag" class="row" autocomplete="off">
+        <input type="text" id="newTag" maxlength="20" placeholder="タグを追加（例：首肩こり）" aria-label="新しいタグ" style="max-width:260px">
+        <button type="submit" class="btn outline small">追加</button>
+      </form>
+    </section>
+    <section class="block">
+      <h3>前回のお話メモ</h3>
+      <textarea id="memo" maxlength="${LIMIT.note}" aria-label="前回のお話メモ" placeholder="次回の会話のきっかけに">${esc(c.memo)}</textarea>
+      <p class="hint">入力すると自動で保存します。お客様アプリには渡りません。</p>
+    </section>
+    <section class="block">
+      <h3>施術履歴</h3>
+      ${visits.length ? `<ol class="timeline">${timeline}</ol>` : '<div class="empty">まだ来店記録がありません。「今日の施術を記録してお渡し」から始めます。</div>'}
+    </section>
+  </article>`;
+}
+
+function visitForm(c) {
+  const menus = state.menus.filter(m => !m.archived);
+  const options = (sel, withNone) => (withNone ? '<option value="">（なし）</option>' : '') +
+    menus.map(m => `<option value="${m.id}" ${m.id === sel ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+  const lv = lastVisit(c);
+  const first = lv && menuById(lv.menuId) && !menuById(lv.menuId).archived ? lv.menuId : menus[0]?.id;
+  return `<form class="visit" id="visitForm" autocomplete="off" novalidate>
+    <div>
+      <p class="eyebrow">today's treatment</p>
+      <h3 style="font-size:1.25rem">今日の施術とお渡し内容</h3>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>施術メニュー</span><select id="vMenu">${options(first)}</select></label>
+      <label class="field"><span>施術日</span><input type="date" id="vDate" value="${today()}"></label>
+    </div>
+    <label class="field"><span>カルテ用メモ（お客様には渡りません）</span><input type="text" id="vNote" maxlength="${LIMIT.note}" placeholder="例：小鼻の毛穴が気になる"></label>
+
+    <div class="to-customer">
+      <p class="eyebrow">to the customer app</p>
+      <div class="grid2">
+        <label class="field"><span>次回までの施術間隔（日）</span><input type="number" id="vInterval" min="1" max="1095" inputmode="numeric" placeholder="例：28"></label>
+        <label class="field"><span>フォローのお知らせ（施術日から何日後）</span><input type="number" id="vFollow" min="1" max="1095" inputmode="numeric" placeholder="例：21"></label>
+      </div>
+      <p class="hint">施術間隔は、お客様アプリの「次回の目安」の計算に使われます（「担当の医師・サロンからの案内」として表示）。空欄なら変更しません。</p>
+      <div class="field">
+        <span class="muted small">施術後のケア案内（メニューの初期内容を読み込み済み。この回だけ変更できます）</span>
+        <div id="careRows" style="display:grid;gap:8px"></div>
+        <div><button type="button" class="btn outline small" id="addCare">項目を追加</button></div>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>次回のおすすめメニュー</span><select id="vNext">${options('', true)}</select></label>
+        <label class="field"><span>おすすめの補足</span><input type="text" id="vNextNote" maxlength="${LIMIT.text}" placeholder="例：乾燥が落ち着いたら"></label>
+      </div>
+      <label class="field"><span>担当者からのメッセージ</span><textarea id="vMsg" maxlength="${LIMIT.message}" placeholder="例：本日はありがとうございました。小鼻まわりがとてもきれいになっています。"></textarea></label>
+      <label class="row small"><input type="checkbox" id="vName" checked> 手紙の宛名に「${esc(c.name)} 様」を入れる</label>
+    </div>
+    <p class="error" id="visitError" role="alert"></p>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="btn outline" id="cancelVisit">やめる</button>
+      <button type="submit" class="btn">記録してQRコードを表示</button>
+    </div>
+  </form>`;
+}
+
+function careRowHTML(item, i) {
+  const kinds = CARE_KINDS.map(([k, l]) => `<option value="${k}" ${item.k === k ? 'selected' : ''}>${l}</option>`).join('');
+  return `<div class="care-row" data-i="${i}">
+    <select aria-label="ケアの時期" data-care="k">${kinds}</select>
+    <input type="number" aria-label="日数" data-care="n" min="2" max="60" value="${item.k === 'p' ? (item.n ?? 3) : ''}" placeholder="日数" ${item.k === 'p' ? '' : 'disabled'}>
+    <input type="text" aria-label="ケアの内容" data-care="t" maxlength="${LIMIT.text}" value="${esc(item.t)}" placeholder="例：当日はメイクを控えめに">
+    <button type="button" class="btn quiet small" data-care-remove aria-label="この項目を削除">削除</button>
+  </div>`;
+}
+function readCareRows(root) {
+  return [...root.querySelectorAll('.care-row')].map(r => {
+    const k = r.querySelector('[data-care=k]').value;
+    const raw = r.querySelector('[data-care=n]').value;
+    return { k, n: k === 'p' ? (raw === '' ? 3 : Number(raw)) : null, t: r.querySelector('[data-care=t]').value.trim() };
+  });
+}
+function bindCareEditor(root, initial) {
+  let items = initial.map(x => ({ ...x }));
+  const draw = () => {
+    root.innerHTML = items.map(careRowHTML).join('') || '<p class="hint">ケア案内はありません。「項目を追加」で入れられます。</p>';
+    root.querySelectorAll('[data-care=k]').forEach(sel => sel.addEventListener('change', () => { items = readCareRows(root); draw(); }));
+    root.querySelectorAll('[data-care-remove]').forEach(btn => btn.addEventListener('click', () => {
+      items = readCareRows(root); items.splice(Number(btn.closest('.care-row').dataset.i), 1); draw();
+    }));
+  };
+  draw();
+  return {
+    add() {
+      items = readCareRows(root);
+      if (items.length >= LIMIT.care) { toast(`ケア案内は${LIMIT.care}項目までです`); return; }
+      items.push({ k: 'o', n: null, t: '' }); draw();
+      root.querySelector('.care-row:last-child [data-care=t]')?.focus();
+    },
+    read() { return readCareRows(root).filter(x => x.t); },
+  };
+}
+function careErrors(items) {
+  for (const x of items) if (x.k === 'p' && !(Number.isInteger(x.n) && x.n >= 2 && x.n <= 60)) return '「期間」のケアの日数は2〜60日で入力してください。';
+  return '';
+}
+
+// --- メニューとケア案内 ---
+function menusView() {
+  const cards = state.menus.map(m => `<article class="menu-card" data-menu="${m.id}">
+    <header>
+      <h3>${esc(m.name)} <span class="pill">${m.builtin ? '標準' : 'サロン独自'}</span> ${m.archived ? '<span class="pill">非表示</span>' : ''}</h3>
+      <div class="row">
+        ${m.builtin ? '' : '<button type="button" class="btn quiet small" data-rename-menu>名前を変更</button>'}
+        <button type="button" class="btn quiet small" data-archive-menu>${m.archived ? '表示する' : '非表示にする'}</button>
+      </div>
+    </header>
+    <div class="grid2">
+      <label class="field"><span>いつもの施術間隔（日）</span><input type="number" data-menu-interval min="1" max="1095" value="${m.interval ?? ''}" placeholder="例：28"></label>
+      <label class="field"><span>いつものフォロー（何日後）</span><input type="number" data-menu-follow min="1" max="1095" value="${m.follow ?? ''}" placeholder="例：21"></label>
+    </div>
+    <div class="field"><span class="muted small">施術後のケア案内</span><div data-care-root style="display:grid;gap:8px"></div></div>
+    <p class="error" data-menu-error role="alert"></p>
+    <div class="row" style="justify-content:space-between">
+      <button type="button" class="btn outline small" data-care-add>項目を追加</button>
+      <button type="button" class="btn small" data-menu-save>保存</button>
+    </div>
+  </article>`).join('');
+  return `<div class="page" style="max-width:none">
+    <div>
+      <h2 style="font-size:1.4rem">メニューとケア案内</h2>
+      <p class="muted small" style="margin:4px 0 0;max-width:60em">ここで入れた施術間隔とケア案内が、お渡しのときの初期内容になります。お客様アプリには、サロンが入力した内容だけが表示されます（アプリが医学的な内容を作ることはありません）。</p>
+    </div>
+    <form id="addMenu" class="row" autocomplete="off">
+      <input type="text" id="newMenuName" maxlength="${LIMIT.name}" placeholder="サロン独自のメニュー名（例：ヘッドスパ）" aria-label="新しいメニュー名" style="max-width:340px">
+      <button type="submit" class="btn outline">メニューを追加</button>
+    </form>
+  </div>
+  <div class="menus">${cards}</div>`;
+}
+
+// --- サロン情報 ---
+function salonView() {
+  const p = state.profile;
+  return `<div class="page">
+    <div>
+      <h2 style="font-size:1.4rem">サロン情報</h2>
+      <p class="muted small" style="margin:4px 0 0">お渡しのたびにお客様アプリへ届き、手紙の署名と「いつものサロンを予約する」ボタンに使われます。</p>
+    </div>
+    <form class="card" id="salonForm" autocomplete="off" novalidate>
+      <div class="grid2">
+        <label class="field"><span>サロン名</span><input type="text" id="sName" maxlength="${LIMIT.name}" value="${esc(p.salonName)}" placeholder="例：Salon Lumière"></label>
+        <label class="field"><span>担当者名（署名）</span><input type="text" id="sStaff" maxlength="${LIMIT.name}" value="${esc(p.staffName)}" placeholder="例：高橋"></label>
+      </div>
+      <label class="field"><span>予約ページの URL（https のみ）</span><input type="url" id="sURL" maxlength="300" value="${esc(p.bookingURL)}" placeholder="https://"></label>
+      <label class="field"><span>再来時の特典（任意）</span><input type="text" id="sPerk" maxlength="${LIMIT.text}" value="${esc(p.perk)}" placeholder="例：次回10%オフ"></label>
+      <p class="error" id="salonError" role="alert"></p>
+      <div class="row" style="justify-content:flex-end"><button class="btn" type="submit">保存</button></div>
+    </form>
+  </div>`;
+}
+
+// --- データ ---
+function dataView() {
+  const samples = state.clients.filter(c => c.isSample).length;
+  return `<div class="page">
+    <div>
+      <h2 style="font-size:1.4rem">データ</h2>
+      <p class="muted small" style="margin:4px 0 0">カルテは、このブラウザの中だけに保存されます。外部のサーバーには送りません。別のパソコン・タブレットで使うときや、ブラウザのデータを消す前は、書き出して保管してください。</p>
+    </div>
+    <div class="card">
+      <h3>書き出し・読み込み</h3>
+      <p class="muted small" style="margin:0">お客様 ${state.clients.length}名・来店 ${state.clients.reduce((n, c) => n + c.visits.length, 0)}件。ファイルにはお客様のお名前とメモが含まれます。保管場所にご注意ください。</p>
+      <div class="row">
+        <button type="button" class="btn" id="exportData">ファイルに書き出す</button>
+        <button type="button" class="btn outline" id="copyData">内容をコピー</button>
+        <label class="btn outline" for="importFile">ファイルから読み込む</label>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+      <div id="importConfirm" class="notice" hidden></div>
+      <p class="error" id="dataError" role="alert"></p>
+    </div>
+    ${samples ? `<div class="card">
+      <h3>サンプルのお客様</h3>
+      <p class="muted small" style="margin:0">画面確認用の架空のお客様が ${samples}名います。</p>
+      <div><button type="button" class="btn danger" id="deleteSamples">サンプルを削除</button></div>
+    </div>` : ''}
+    <div class="card">
+      <h3>すべて消去</h3>
+      <p class="muted small" style="margin:0">このブラウザのカルテ・メニュー設定・サロン情報をすべて消します。元に戻せません。</p>
+      <div><button type="button" class="btn danger" id="wipe">すべて消去する</button></div>
+      <div id="wipeConfirm" class="notice warn" hidden>
+        <p style="margin:0 0 8px">本当にすべて消去しますか？ 書き出したファイルがあれば、あとで読み込めます。</p>
+        <div class="row"><button type="button" class="btn danger small" id="wipeYes">消去する</button><button type="button" class="btn outline small" id="wipeNo">やめる</button></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---------- 操作 ----------
+function bind() {
+  if (ui.view === 'clients') bindClients();
+  else if (ui.view === 'menus') bindMenus();
+  else if (ui.view === 'salon') bindSalon();
+  else if (ui.view === 'data') bindData();
+}
+
+function bindClients() {
+  $('#addClient')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#newClientName').value.trim();
+    if (!name) return;
+    const c = { id: uuid(), name, isSample: false, tags: [], memo: '', visits: [] };
+    state.clients.push(c);
+    ui.clientId = c.id; ui.visitOpen = false; ui.query = '';
+    save(); render(); toast(`${name} 様を追加しました`);
+  });
+  const search = $('#search');
+  search?.addEventListener('input', () => {
+    ui.query = search.value;
+    const pos = search.selectionStart;
+    render();
+    const s = $('#search'); s.focus(); s.setSelectionRange(pos, pos);
+  });
+  document.querySelectorAll('[data-client]').forEach(b => b.addEventListener('click', () => {
+    ui.clientId = b.dataset.client; ui.visitOpen = false; render();
+  }));
+  const c = clientById(ui.clientId);
+  if (!c) return;
+
+  document.querySelectorAll('[data-tag]').forEach(b => b.addEventListener('click', () => {
+    const t = b.dataset.tag;
+    c.tags = c.tags.includes(t) ? c.tags.filter(x => x !== t) : [...c.tags, t];
+    save(); b.setAttribute('aria-pressed', c.tags.includes(t));
+  }));
+  $('#addTag')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const t = $('#newTag').value.trim();
+    if (!t) return;
+    if (!state.tags.includes(t)) state.tags.push(t);
+    if (!c.tags.includes(t)) c.tags.push(t);
+    save(); render();
+  });
+  $('#memo')?.addEventListener('input', e => { c.memo = e.target.value; save(); });
+  $('#renameClient')?.addEventListener('click', () => {
+    const h = $('#chartName');
+    h.innerHTML = `<form id="renameForm" class="row"><input type="text" id="renameInput" maxlength="${LIMIT.name}" value="${esc(c.name)}" aria-label="お名前" style="max-width:240px"><button class="btn small" type="submit">保存</button></form>`;
+    $('#renameInput').focus();
+    $('#renameForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const v = $('#renameInput').value.trim();
+      if (v) { c.name = v; c.isSample = false; save(); }
+      render();
+    });
+  });
+  $('#deleteClient')?.addEventListener('click', () => { $('#deleteConfirm').hidden = false; $('#deleteYes').focus(); });
+  $('#deleteNo')?.addEventListener('click', () => { $('#deleteConfirm').hidden = true; });
+  $('#deleteYes')?.addEventListener('click', () => {
+    state.clients = state.clients.filter(x => x.id !== c.id);
+    ui.clientId = null; save(); render(); toast('カルテを削除しました');
+  });
+  document.querySelectorAll('[data-qr]').forEach(b => b.addEventListener('click', () => {
+    const v = c.visits.find(x => x.id === b.dataset.qr);
+    if (v) showQR(c, v);
+  }));
+  $('#openVisit')?.addEventListener('click', () => { ui.visitOpen = true; render(); $('#vMenu')?.focus(); });
+  if (ui.visitOpen) bindVisit(c);
+}
+
+function bindVisit(c) {
+  let care;
+  const loadMenuDefaults = () => {
+    const m = menuById($('#vMenu').value);
+    $('#vInterval').value = m?.interval ?? '';
+    $('#vFollow').value = m?.follow ?? '';
+    care = bindCareEditor($('#careRows'), m?.care || []);
+  };
+  loadMenuDefaults();
+  $('#vMenu').addEventListener('change', loadMenuDefaults);
+  $('#addCare').addEventListener('click', () => care.add());
+  $('#cancelVisit').addEventListener('click', () => { ui.visitOpen = false; render(); });
+  $('#visitForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = $('#visitError');
+    const m = menuById($('#vMenu').value);
+    const date = $('#vDate').value;
+    const iv = intOrNull($('#vInterval').value, 1, 1095);
+    const fu = intOrNull($('#vFollow').value, 1, 1095);
+    const items = care.read();
+    if (!m) { err.textContent = '施術メニューを選んでください。'; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { err.textContent = '施術日を入力してください。'; return; }
+    if (Number.isNaN(iv)) { err.textContent = '施術間隔は1〜1095日の整数で入力してください。'; return; }
+    if (Number.isNaN(fu)) { err.textContent = 'フォローの日数は1〜1095日の整数で入力してください。'; return; }
+    const ce = careErrors(items); if (ce) { err.textContent = ce; return; }
+    err.textContent = '';
+
+    const next = menuById($('#vNext').value);
+    const nextNote = $('#vNextNote').value.trim();
+    const msg = $('#vMsg').value.trim();
+    const p = state.profile;
+    const visitId = uuid();
+    const salon = { n: p.salonName || '担当サロン' };
+    if (p.staffName) salon.e = p.staffName;
+    if (p.bookingURL && validURL(p.bookingURL)) salon.u = p.bookingURL;
+    if (p.perk) salon.p = p.perk;
+    const handoff = { v: 1, id: visitId, s: salon, m: m.builtin ? { id: m.id, n: m.name } : { n: m.name }, d: date };
+    if ($('#vName').checked) handoff.c = c.name;
+    if (iv != null) handoff.iv = iv;
+    if (fu != null) handoff.fu = fu;
+    if (next || nextNote) {
+      handoff.nx = {};
+      if (next?.builtin) handoff.nx.id = next.id;
+      if (next) handoff.nx.n = next.name;
+      if (nextNote) handoff.nx.t = nextNote;
+    }
+    if (msg) handoff.msg = msg;
+    if (items.length) handoff.ac = items.map(x => (x.k === 'p' ? { k: 'p', n: x.n, t: x.t } : { k: x.k, t: x.t }));
+
+    const url = await encodeHandoff(handoff);
+    const visit = { id: visitId, menuId: m.id, menuName: m.name, date, note: $('#vNote').value.trim(), url };
+    c.visits.push(visit);
+    ui.visitOpen = false;
+    save(); render();
+    showQR(c, visit);
+  });
+}
+
+function bindMenus() {
+  $('#addMenu')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#newMenuName').value.trim();
+    if (!name) return;
+    if (state.menus.some(m => m.name === name)) { toast('同じ名前のメニューがあります'); return; }
+    state.menus.push({ id: 'salon.' + uuid(), name, builtin: false, archived: false, interval: null, follow: null, care: [] });
+    save(); render(); toast(`${name}を追加しました`);
+  });
+  document.querySelectorAll('.menu-card').forEach(card => {
+    const m = menuById(card.dataset.menu);
+    const editor = bindCareEditor(card.querySelector('[data-care-root]'), m.care);
+    card.querySelector('[data-care-add]').addEventListener('click', () => editor.add());
+    card.querySelector('[data-archive-menu]').addEventListener('click', () => { m.archived = !m.archived; save(); render(); });
+    card.querySelector('[data-rename-menu]')?.addEventListener('click', () => {
+      const h = card.querySelector('h3');
+      h.innerHTML = `<form class="row"><input type="text" maxlength="${LIMIT.name}" value="${esc(m.name)}" aria-label="メニュー名" style="max-width:240px"><button class="btn small" type="submit">保存</button></form>`;
+      const input = h.querySelector('input'); input.focus();
+      h.querySelector('form').addEventListener('submit', e => { e.preventDefault(); const v = input.value.trim(); if (v) { m.name = v; save(); } render(); });
+    });
+    card.querySelector('[data-menu-save]').addEventListener('click', () => {
+      const err = card.querySelector('[data-menu-error]');
+      const iv = intOrNull(card.querySelector('[data-menu-interval]').value, 1, 1095);
+      const fu = intOrNull(card.querySelector('[data-menu-follow]').value, 1, 1095);
+      const items = editor.read();
+      if (Number.isNaN(iv) || Number.isNaN(fu)) { err.textContent = '日数は1〜1095の整数で入力してください。'; return; }
+      const ce = careErrors(items); if (ce) { err.textContent = ce; return; }
+      err.textContent = '';
+      m.interval = iv; m.follow = fu; m.care = items;
+      save(); toast(`${m.name}を保存しました`);
+    });
+  });
+}
+
+function bindSalon() {
+  $('#salonForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const url = $('#sURL').value.trim();
+    if (!validURL(url)) { $('#salonError').textContent = '予約ページは https:// から始まる URL を入力してください。'; return; }
+    state.profile = { salonName: $('#sName').value.trim(), staffName: $('#sStaff').value.trim(), bookingURL: url, perk: $('#sPerk').value.trim() };
+    save(); render(); toast('サロン情報を保存しました');
+  });
+}
+
+function backupText() {
+  return JSON.stringify({ format: 'lulucie-salon-backup', exportedAt: new Date().toISOString(), data: state }, null, 2);
+}
+function bindData() {
+  const err = $('#dataError');
+  $('#exportData').addEventListener('click', async () => {
+    err.textContent = '';
+    let downloads = null;
+    try { downloads = window.claude?.use ? await window.claude.use('downloads') : null; } catch (e) {}
+    if (!downloads) {
+      // 通常のウェブページでは、ブラウザのダウンロードで保存する
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([backupText()], { type: 'application/json' }));
+      a.download = `lulucie-salon-${today()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast('書き出しました（ダウンロードフォルダを確認してください）');
+      return;
+    }
+    try { await downloads.save({ filename: `lulucie-salon-${today()}.json`, data: backupText() }); toast('書き出しました'); }
+    catch (e) { if (e?.code !== 'declined') err.textContent = 'ファイルに保存できませんでした。「内容をコピー」もお使いいただけます。'; }
+  });
+  $('#copyData').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(backupText()); toast('コピーしました。メモ帳などに貼り付けて保管してください'); }
+    catch (e) { err.textContent = 'コピーできませんでした。「ファイルに書き出す」をお試しください。'; }
+  });
+  $('#importFile').addEventListener('change', async e => {
+    err.textContent = '';
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (parsed.format !== 'lulucie-salon-backup') throw new Error('format');
+      const incoming = normalize(parsed.data);
+      const box = $('#importConfirm');
+      box.hidden = false;
+      box.innerHTML = `<p style="margin:0 0 8px">「${esc(file.name)}」（お客様 ${incoming.clients.length}名）を読み込みます。今このブラウザにあるデータは置き換わります。</p>
+        <div class="row"><button type="button" class="btn small" id="importYes">読み込む</button><button type="button" class="btn outline small" id="importNo">やめる</button></div>`;
+      $('#importYes').addEventListener('click', () => { state = incoming; ui.clientId = null; save(); setView('clients'); toast('読み込みました'); });
+      $('#importNo').addEventListener('click', () => { box.hidden = true; });
+    } catch (x) {
+      err.textContent = 'Lulucie Salon の書き出しファイルとして読み込めませんでした。';
+    }
+  });
+  $('#deleteSamples')?.addEventListener('click', () => {
+    state.clients = state.clients.filter(c => !c.isSample); ui.clientId = null; save(); render(); toast('サンプルを削除しました');
+  });
+  $('#wipe').addEventListener('click', () => { $('#wipeConfirm').hidden = false; });
+  $('#wipeNo').addEventListener('click', () => { $('#wipeConfirm').hidden = true; });
+  $('#wipeYes').addEventListener('click', () => {
+    state = emptyState(); ui.clientId = null; save(); setView('clients'); toast('すべて消去しました');
+  });
+}
+
+// 初回のサンプルも含めて保存し、ブラウザにデータを消されにくくするよう依頼する
+save();
+try { navigator.storage?.persist?.().catch(() => {}); } catch (e) {}
+render();
+</script>
+</body>
+</html>

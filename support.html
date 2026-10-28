@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lulucie サポート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
+<style>
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  /* Layout: contact block first, then short Q&A in one reading column */
+  :root {
+    --bg: #FBF9F6; --ink: #2B2A28; --stone: #6F6A63; --line: rgba(43,42,40,.14);
+    --sage: #5F7466; --champagne: #A88B5E; --panel: #F3EFE8;
+    --display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --body: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #1C1D1B; --ink: #ECE8E1; --stone: #A9A39A; --line: rgba(236,232,225,.16);
+    --sage: #A3B8A9; --champagne: #D2B98F; --panel: #262725; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #1C1D1B; --ink: #ECE8E1; --stone: #A9A39A; --line: rgba(236,232,225,.16);
+    --sage: #A3B8A9; --champagne: #D2B98F; --panel: #262725; color-scheme: dark }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.95; }
+  main { max-width: 680px; margin: 0 auto; padding-block: 56px 88px;
+         padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .brand { font-family: var(--display); color: var(--champagne); letter-spacing: .24em; font-size: .8rem; margin: 0 0 12px; }
+  h1 { font-family: var(--display); font-weight: 500; font-size: clamp(1.6rem, 5vw, 2rem); letter-spacing: .04em; line-height: 1.5; margin: 0; }
+  .lead { color: var(--stone); margin: 8px 0 32px; }
+  .contact { background: var(--panel); border-radius: 6px; padding: 20px; display: grid; gap: 10px; }
+  .contact h2 { margin: 0; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .mail { font-size: 1.05rem; user-select: all; overflow-wrap: anywhere; min-width: 0; }
+  button { font: inherit; font-size: .85rem; color: var(--sage); background: transparent; border: 1px solid var(--sage); border-radius: 999px; padding: 2px 14px; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+  .small { color: var(--stone); font-size: .85rem; margin: 0; }
+  h2 { font-family: var(--display); font-weight: 500; font-size: 1.1rem; }
+  section { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 32px; }
+  section > h2 { margin: 0 0 4px; }
+  dl { margin: 0; }
+  dt { font-weight: 500; margin-top: 16px; }
+  dd { margin: 4px 0 0; color: var(--ink); }
+  a { color: var(--sage); }
+</style>
+
+</head>
+<body>
+<main>
+  <p class="brand">LULUCIE</p>
+  <h1>Lulucie サポート</h1>
+  <p class="lead">エステ・美容サロン・美容医療の施術記録と次の予定を整理する手帖アプリ「Lulucie（ルルシー）」のサポートページです。</p>
+
+  <div class="contact">
+    <h2>お問い合わせ</h2>
+    <div class="row">
+      <span class="mail" id="mail">1004k0109n@gmail.com</span>
+      <button type="button" id="copy">コピー</button>
+    </div>
+    <p class="small">運営：Calm Design。お使いの iPhone の機種と iOS のバージョン、起きたことを書いてお送りください。</p>
+  </div>
+
+  <section>
+    <h2>よくある質問</h2>
+    <dl>
+      <dt>サロンから受け取るには？</dt>
+      <dd>ホームの「サロンから受け取る」を押し、サロンの画面に表示されたQRコードを枠に入れてください。iPhone のカメラアプリで読み取っても開けます。内容を確認して「受け取る」を押すと、施術記録・次回の目安・ケアの案内が入ります。</dd>
+
+      <dt>記録はどこに保存されますか？</dt>
+      <dd>お使いの iPhone の中だけに保存されます。外部への送信やログインはありません。</dd>
+
+      <dt>機種変更のときは？</dt>
+      <dd>設定 ›「データを書き出す」でバックアップファイルを作り、新しい iPhone で「バックアップから復元」を選んでください。</dd>
+
+      <dt>通知が届きません</dt>
+      <dd>iPhone の 設定 › 通知 › Lulucie で通知が許可されているか確認してください。アプリ内の設定で、お知らせする日も選べます。</dd>
+
+      <dt>次回の目安の日はどう決まりますか？</dt>
+      <dd>前回の施術日に、ご自身で設定した施術間隔を足した日です。ホームの「なぜこの日？」から確認できます。肌の状態や施術の効果を判定するものではないため、施術については担当の医師・サロンの指示を優先してください。</dd>
+
+      <dt>予約はアプリからできますか？</dt>
+      <dd>できません。予約は各サロン・クリニックでお手続きください。</dd>
+
+      <dt>サロンの方へ</dt>
+      <dd>サロン向けのカルテとお渡しの画面「<a href="salon.html">Lulucie Salon</a>」は、ブラウザで使うウェブアプリです。ご不明な点は、上記のメールアドレスまでお問い合わせください。</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>プライバシー</h2>
+    <p>情報の取り扱いは <a href="privacy.html">プライバシーポリシー</a> をご覧ください。</p>
+  </section>
+</main>
+
+<script>
+  document.getElementById('copy').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const text = document.getElementById('mail').textContent;
+    try { await navigator.clipboard.writeText(text); btn.textContent = 'コピーしました'; }
+    catch {
+      const r = document.createRange(); r.selectNodeContents(document.getElementById('mail'));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = '選択しました';
+    }
+    setTimeout(() => { btn.textContent = 'コピー'; }, 2000);
+  });
+</script>
+</body>
+</html>
