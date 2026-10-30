@@ -454,6 +454,7 @@ function visitForm(c) {
       <p class="hint">施術間隔は、お客様アプリの「次回の目安」の計算に使われます（「担当の医師・サロンからの案内」として表示）。空欄なら変更しません。</p>
       <div class="field">
         <span class="muted small">施術後のケア案内（メニューの初期内容を読み込み済み。この回だけ変更できます）</span>
+        <p class="hint">1項目は短く（20字くらいまで）がおすすめです。お客さまのアプリのウィジェットに「今日のひとつ」として1つずつ表示されます。</p>
         <div id="careRows" style="display:grid;gap:8px"></div>
         <div><button type="button" class="btn outline small" id="addCare">項目を追加</button></div>
       </div>
@@ -464,6 +465,7 @@ function visitForm(c) {
       <label class="field"><span>担当者からのメッセージ</span><textarea id="vMsg" maxlength="${LIMIT.message}" placeholder="例：本日はありがとうございました。小鼻まわりがとてもきれいになっています。"></textarea></label>
       <label class="row small"><input type="checkbox" id="vName" checked> 手紙の宛名に「${esc(c.name)} 様」を入れる</label>
     </div>
+    ${state.profile.staffName ? '' : '<p class="notice" style="margin:0">担当者名がまだ入っていません。「サロン情報」で入れると、お客さまの手紙に署名として残ります。</p>'}
     <p class="error" id="visitError" role="alert"></p>
     <div class="row" style="justify-content:flex-end">
       <button type="button" class="btn outline" id="cancelVisit">やめる</button>
@@ -527,7 +529,7 @@ function menusView() {
       <label class="field"><span>いつもの施術間隔（日）</span><input type="number" data-menu-interval min="1" max="1095" value="${m.interval ?? ''}" placeholder="例：28"></label>
       <label class="field"><span>いつものフォロー（何日後）</span><input type="number" data-menu-follow min="1" max="1095" value="${m.follow ?? ''}" placeholder="例：21"></label>
     </div>
-    <div class="field"><span class="muted small">施術後のケア案内</span><div data-care-root style="display:grid;gap:8px"></div></div>
+    <div class="field"><span class="muted small">施術後のケア案内</span><p class="hint">1項目は短く（20字くらいまで）。お客さまのウィジェットに1つずつ表示されます。</p><div data-care-root style="display:grid;gap:8px"></div></div>
     <p class="error" data-menu-error role="alert"></p>
     <div class="row" style="justify-content:space-between">
       <button type="button" class="btn outline small" data-care-add>項目を追加</button>
@@ -560,6 +562,7 @@ function salonView() {
         <label class="field"><span>サロン名</span><input type="text" id="sName" maxlength="${LIMIT.name}" value="${esc(p.salonName)}" placeholder="例：Salon Lumière"></label>
         <label class="field"><span>担当者名（署名）</span><input type="text" id="sStaff" maxlength="${LIMIT.name}" value="${esc(p.staffName)}" placeholder="例：高橋"></label>
       </div>
+      <p class="hint">担当者名は、お客さまのアプリの「これまでの手紙」に、手紙ごとの署名として残ります。</p>
       <label class="field"><span>予約ページの URL（https のみ）</span><input type="url" id="sURL" maxlength="300" value="${esc(p.bookingURL)}" placeholder="https://"></label>
       <label class="field"><span>再来時の特典（任意）</span><input type="text" id="sPerk" maxlength="${LIMIT.text}" value="${esc(p.perk)}" placeholder="例：次回10%オフ"></label>
       <p class="error" id="salonError" role="alert"></p>
