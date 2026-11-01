@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF9F6">
+<meta name="referrer" content="no-referrer">
+<title>Lulucie ウェブ版</title>
+<link rel="manifest" href="web/manifest.webmanifest">
+<link rel="icon" href="web/icon-192.png">
+<link rel="apple-touch-icon" href="web/icon-192.png">
+<style>
+  /* お客さま用のウェブ版（主に Android 向け）。外部の文字や部品は読み込まず、データはこの端末のブラウザの中だけに置く */
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  :root {
+    --bg: #FBF9F6; --surface: #FFFFFF; --panel: #F3EFE8; --ink: #2B2A28; --stone: #6F6A63;
+    --line: rgba(43,42,40,.13); --sage: #5E7064; --sage-soft: #E4EAE5; --champagne: #8F7149; --champagne-soft: #F1E8DA;
+    --rose: #A2655D; --rose-soft: #F4E4E1; --on-ink: #FBF9F6;
+    --display: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
+    --body: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #1B1C1A; --surface: #242522; --panel: #2C2D2A; --ink: #ECE8E1; --stone: #ABA59C;
+    --line: rgba(236,232,225,.15); --sage: #A5BAAB; --sage-soft: #2F3832; --champagne: #D5BC92; --champagne-soft: #3A3328;
+    --rose: #D69488; --rose-soft: #3B2926; --on-ink: #1B1C1A; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #1B1C1A; --surface: #242522; --panel: #2C2D2A; --ink: #ECE8E1; --stone: #ABA59C;
+    --line: rgba(236,232,225,.15); --sage: #A5BAAB; --sage-soft: #2F3832; --champagne: #D5BC92; --champagne-soft: #3A3328;
+    --rose: #D69488; --rose-soft: #3B2926; --on-ink: #1B1C1A; color-scheme: dark }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.75;
+         -webkit-text-size-adjust: 100%; overflow-wrap: anywhere; }
+  main { max-width: 560px; margin: 0 auto; padding-block: 16px 170px;
+         padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1, h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; line-height: 1.4; }
+  p { margin: 0; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+  .eyebrow { font-size: .72rem; letter-spacing: .2em; color: var(--champagne); text-transform: uppercase; }
+  .muted { color: var(--stone); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .small { font-size: .86rem; }
+  .stack { display: grid; gap: 16px; }
+  .stack.tight { gap: 8px; }
+
+  /* ヘッダー */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .top h1 { font-size: 1.9rem; font-style: italic; }
+  .top .sub { font-size: .78rem; letter-spacing: .12em; color: var(--stone); }
+  .top > div:first-child { min-width: 0; }
+  .iconbtns { display: flex; gap: 4px; flex: none; }
+  .iconbtn { display: grid; justify-items: center; gap: 2px; min-width: 52px; min-height: 48px; padding: 4px 6px;
+             border: 0; background: none; cursor: pointer; font-size: .78rem; font-weight: 500; }
+  .iconbtn span.ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); }
+  .iconbtn svg { width: 18px; height: 18px; }
+  .bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .bar h2 { font-size: 1.15rem; flex: 1; text-align: center; padding-right: 48px; }
+  .back { min-width: 48px; min-height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); cursor: pointer; display: grid; place-items: center; }
+
+  /* カード */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .card.soft { background: var(--panel); border-color: transparent; }
+  .card h2 { font-size: 1.25rem; }
+  .letter { border-radius: 4px; border-color: color-mix(in srgb, var(--champagne) 45%, transparent); padding: 24px 20px; }
+  .letter .body { font-family: var(--display); line-height: 1.95; white-space: pre-wrap; }
+  .letter .body.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .sign { text-align: right; font-family: var(--display); color: var(--stone); font-size: .9rem; }
+  .hair { border: 0; border-top: 1px solid var(--line); margin: 0; }
+  .notice { padding: 12px 14px; border-radius: 12px; background: var(--champagne-soft); font-size: .9rem; }
+  .notice.warn { background: var(--rose-soft); }
+  .error { color: var(--rose); }
+
+  /* ケアの行 */
+  .care-row { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0; padding: 12px 0; cursor: pointer; }
+  .care-row + .care-row { border-top: 1px solid var(--line); }
+  .box { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 1.5px solid color-mix(in srgb, var(--ink) 35%, transparent); display: grid; place-items: center; margin-top: 2px; }
+  .care-row[aria-pressed="true"] .box { background: var(--sage); border-color: var(--sage); color: var(--on-ink); }
+  .care-row .when { font-size: .82rem; font-weight: 500; color: var(--sage); }
+  .care-row .done { font-size: .82rem; font-weight: 500; color: var(--stone); margin-left: 8px; }
+
+  /* 目安 */
+  .guide-num { font-family: var(--display); font-size: 3rem; line-height: 1.1; }
+  .guide-num small { font-size: 1rem; margin: 0 4px; }
+  .center { text-align: center; }
+  .rows { display: grid; gap: 12px; }
+  .rows > div + div { border-top: 1px solid var(--line); padding-top: 12px; }
+  .label { font-size: .8rem; font-weight: 500; color: var(--sage); }
+  .value { font-family: var(--display); font-size: 1.1rem; }
+
+  /* ボタン */
+  .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 52px; padding: 10px 18px;
+         border-radius: 999px; border: 1px solid var(--ink); background: var(--ink); color: var(--on-ink); font-weight: 500; cursor: pointer; text-align: center; text-decoration: none; }
+  .btn.outline { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn .subt { font-size: .76rem; font-weight: 400; opacity: .8; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .linkbtn { background: none; border: 0; padding: 10px 0; min-height: 44px; text-decoration: underline; color: var(--stone); cursor: pointer; font-size: .9rem; }
+  .pinned { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+            background: color-mix(in srgb, var(--bg) 92%, transparent); border-top: 1px solid var(--line); backdrop-filter: blur(8px); }
+  .pinned > div { max-width: 560px; margin: 0 auto; display: grid; gap: 8px; }
+
+  /* 入力 */
+  label.field { display: grid; gap: 4px; font-size: .88rem; color: var(--stone); }
+  input[type=text], input[type=date], select, textarea { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 16px; }
+  textarea { min-height: 160px; resize: vertical; }
+
+  /* 一覧 */
+  .list { display: grid; }
+  .list button { display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 14px 2px; cursor: pointer; min-height: 56px; }
+  .list button:last-child { border-bottom: 1px solid var(--line); }
+  .list .date { font-family: var(--display); }
+
+  .showmemo { position: fixed; inset: 0; background: var(--bg); padding: max(24px, env(safe-area-inset-top, 0px)) 20px 120px; overflow: auto; z-index: 10; }
+  .showmemo p.big { font-size: 1.6rem; line-height: 1.8; white-space: pre-wrap; max-width: 560px; margin: 16px auto; }
+  footer { margin-top: 32px; color: var(--stone); font-size: .8rem; }
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<div id="overlay"></div>
+<noscript><p style="padding:16px">このページを使うには JavaScript を有効にしてください。</p></noscript>
+<script>
+'use strict';
+// ---------------------------------------------------------------
+// Lulucie ウェブ版（お客さま用）
+// - サロンの「Android（ウェブ版）」QRは web.html#d=…（または #j=…）。# 以降はサーバーへ送られない
+// - 中身はアプリ版と同じ形式（v1）。保存先はこのブラウザの localStorage だけ
+// - 通知・ウィジェットはなし
+// ---------------------------------------------------------------
+const STORAGE_KEY = 'lulucie-web-v1';
+const PREF_KEY = 'lulucie-web-pref';
+const BACKUP_FORMAT = 'jp.lulucie.web-backup';
+const MAX_TEXT = 400, MAX_CARE = 10, MEMO_MAX = 400, LETTER_COLLAPSE = 120;
+const MEMO_NOTE = 'このメモはサロンへ送信されません。来店時に画面を見せてお伝えください。';
+const CHECK_LABEL = '確認しました';
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+  const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+// ---------- 日付（端末の日付で数える） ----------
+const pad = n => String(n).padStart(2, '0');
+function todayStr() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function parseDay(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+  if (!m) return null;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? d : null;
+}
+function addDays(s, n) { const d = parseDay(s); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function diffDays(a, b) { return Math.round((parseDay(b) - parseDay(a)) / 86400000); }
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+function shortLabel(s) { const d = parseDay(s); return d ? `${d.getUTCMonth() + 1}月${d.getUTCDate()}日` : ''; }
+function longLabel(s) { const d = parseDay(s); return d ? `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日（${WD[d.getUTCDay()]}）` : ''; }
+function timeLabel(iso) { const d = new Date(iso); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours()}:${pad(d.getMinutes())}`; }
+function isoDayOf(iso) { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+
+// ---------- 保存 ----------
+function emptyData() {
+  return { schema: 1, records: [], menus: {}, profile: { salonName: '', staff: '', bookingURL: '' },
+           letters: [], received: {}, checks: [], memo: null, lastExportAt: null };
+}
+let storageOK = true;
+let data = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return emptyData();
+    const d = JSON.parse(raw);
+    return normalize(d);
+  } catch (e) {
+    storageOK = false;
+    return emptyData();
+  }
+}
+function normalize(d) {
+  const base = emptyData();
+  const out = Object.assign(base, d || {});
+  out.records = Array.isArray(out.records) ? out.records : [];
+  out.letters = Array.isArray(out.letters) ? out.letters : [];
+  out.checks = Array.isArray(out.checks) ? out.checks : [];
+  out.menus = out.menus && typeof out.menus === 'object' ? out.menus : {};
+  out.received = out.received && typeof out.received === 'object' ? out.received : {};
+  out.profile = Object.assign({ salonName: '', staff: '', bookingURL: '' }, out.profile || {});
+  return out;
+}
+/** 保存できたときだけ反映する。失敗したら元のまま false を返す */
+function commit(next) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch (e) {
+    return false;
+  }
+  data = next;
+  return true;
+}
+function pref(key, value) {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
+    if (value === undefined) return p[key];
+    p[key] = value; localStorage.setItem(PREF_KEY, JSON.stringify(p));
+  } catch (e) { return undefined; }
+}
+// ブラウザが容量不足で自動的に消さないよう、可能なら「残す」扱いを頼む（断られても動作は同じ）
+try { navigator.storage?.persist?.(); } catch (e) {}
+
+// ---------- QRの中身（アプリ版 SalonHandoffCodec と同じ） ----------
+class HandoffError extends Error {}
+const ERR = {
+  notLulucie: 'Lulucie のQRコードではありません。サロンの画面に表示されたQRコードを読み取ってください。',
+  unreadable: 'QRコードの内容を読み取れませんでした。もう一度表示してもらい、読み取ってください。',
+  unsupported: '新しい形式のQRコードです。このページを開き直してから、もう一度読み取ってください。',
+  invalid: d => `受け取れない内容が含まれています（${d}）。サロンに確認してください。`,
+};
+function b64urlDecode(s) {
+  let b = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (b.length % 4) b += '=';
+  const bin = atob(b);
+  return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+async function decodeHandoff(params) {
+  let bytes;
+  try {
+    if (params.has('d')) {
+      if (typeof DecompressionStream === 'undefined') throw new HandoffError(ERR.unreadable + '（このブラウザは対応していません。Chrome を最新にしてお試しください）');
+      const ds = new DecompressionStream('deflate-raw');
+      const buf = await new Response(new Blob([b64urlDecode(params.get('d'))]).stream().pipeThrough(ds)).arrayBuffer();
+      bytes = new Uint8Array(buf);
+    } else if (params.has('j')) {
+      bytes = b64urlDecode(params.get('j'));
+    } else {
+      throw new HandoffError(ERR.notLulucie);
+    }
+  } catch (e) {
+    if (e instanceof HandoffError) throw e;
+    throw new HandoffError(ERR.unreadable);
+  }
+  let h;
+  try { h = JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { throw new HandoffError(ERR.unreadable); }
+  if (!h || typeof h.v !== 'number') throw new HandoffError(ERR.unreadable);
+  if (h.v > 1) throw new HandoffError(ERR.unsupported);
+  validate(h);
+  // 知らない項目（担当者だけのメモなど）は持たない
+  return pick(h);
+}
+function pick(h) {
+  const s = h.s || {};
+  return {
+    v: h.v, id: String(h.id).toUpperCase(),
+    s: { n: s.n || '', e: s.e || null, u: s.u || null, p: s.p || null },
+    c: h.c || null, m: { id: h.m.id || null, n: h.m.n }, d: h.d,
+    iv: h.iv ?? null, fu: h.fu ?? null,
+    nx: h.nx ? { id: h.nx.id || null, n: h.nx.n || null, t: h.nx.t || null } : null,
+    msg: h.msg || null,
+    ac: (h.ac || []).map(a => ({ k: a.k, n: a.n ?? null, t: a.t })),
+  };
+}
+function validate(h) {
+  const isStr = v => v == null || typeof v === 'string';
+  if (typeof h.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(h.id)) throw new HandoffError(ERR.unreadable);
+  if (!h.s || typeof h.s.n !== 'string' || !h.m || typeof h.m.n !== 'string' || typeof h.d !== 'string') throw new HandoffError(ERR.unreadable);
+  if (![h.s.e, h.s.u, h.s.p, h.c, h.m.id, h.msg, h.nx?.n, h.nx?.t, h.nx?.id].every(isStr)) throw new HandoffError(ERR.unreadable);
+  if (!parseDay(h.d)) throw new HandoffError(ERR.invalid('施術日'));
+  if (!h.m.n.trim()) throw new HandoffError(ERR.invalid('メニュー名'));
+  const inRange = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+  if (h.iv != null && !inRange(h.iv, 1, 1095)) throw new HandoffError(ERR.invalid('施術間隔'));
+  if (h.fu != null && !inRange(h.fu, 1, 1095)) throw new HandoffError(ERR.invalid('ご案内の日数'));
+  const care = h.ac || [];
+  if (!Array.isArray(care) || care.length > MAX_CARE) throw new HandoffError(ERR.invalid('アフターケアの項目数'));
+  for (const a of care) {
+    if (!a || typeof a.t !== 'string' || !['d', 'p', 'o'].includes(a.k)) throw new HandoffError(ERR.invalid('アフターケアの種類'));
+    if (a.k === 'p' && !inRange(a.n, 2, 60)) throw new HandoffError(ERR.invalid('アフターケアの日数'));
+  }
+  const texts = [h.s.n, h.s.e, h.s.u, h.s.p, h.c, h.m.n, h.nx?.n, h.nx?.t, h.msg, ...care.map(a => a.t)].filter(Boolean);
+  if (!texts.every(t => [...t].length <= MAX_TEXT)) throw new HandoffError(ERR.invalid('文字数'));
+}
+function canonical(v) {
+  if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
+  if (v && typeof v === 'object') return '{' + Object.keys(v).sort().filter(k => v[k] != null).map(k => JSON.stringify(k) + ':' + canonical(v[k])).join(',') + '}';
+  return JSON.stringify(v);
+}
+async function fingerprint(h) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical(h)));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function receiveStatus(h, fp) {
+  if (!(h.id in data.received)) return 'new';
+  return data.received[h.id] === fp ? 'already' : 'changed';
+}
+
+// ---------- 計算 ----------
+const careTiming = a => a.k === 'd' ? '当日' : a.k === 'p' ? `${a.n}日間` : '次回まで';
+function sortedRecords() {
+  return [...data.records].sort((a, b) => a.day === b.day ? b.createdAt.localeCompare(a.createdAt) : b.day.localeCompare(a.day));
+}
+function latestRecord(menuKey) {
+  const t = todayStr();
+  return sortedRecords().find(r => r.day <= t && (menuKey == null || r.menuKey === menuKey)) || null;
+}
+/** 直近の施術の、いま期間中のケア */
+function activeCare() {
+  const r = latestRecord(null), t = todayStr();
+  if (!r || !r.care || !r.care.items.length) return null;
+  const entries = [];
+  for (const it of r.care.items) {
+    let end = null;
+    if (it.k === 'd') { if (r.day !== t) continue; end = r.day; }
+    else if (it.k === 'p') { end = addDays(r.day, it.n - 1); if (!(r.day <= t && t <= end)) continue; }
+    entries.push({ key: `${r.id}|${it.id}`, item: it, end });
+  }
+  return entries.length ? { record: r, entries } : null;
+}
+function periodLabel(e) {
+  if (e.item.k === 'd') return '今日まで';
+  if (e.item.k === 'o') return '次回の施術まで';
+  const left = diffDays(todayStr(), e.end);
+  return left === 0 ? '今日まで' : `${shortLabel(e.end)}まで（あと${left}日）`;
+}
+/** 記録に保存した控えだけを使う（今の案内から作り直さない） */
+function receivedLines(r) {
+  if (!r.care) return null;
+  const t = todayStr();
+  const later = data.records.some(o => o.id !== r.id && o.menuKey === r.menuKey && (o.day > r.day || (o.day === r.day && o.createdAt > r.createdAt)));
+  return r.care.items.map(it => {
+    if (it.k === 'd') return { it, label: `${shortLabel(r.day)}（当日）`, over: r.day < t };
+    if (it.k === 'p') { const end = addDays(r.day, it.n - 1); return { it, label: `${shortLabel(r.day)}〜${shortLabel(end)}（${it.n}日間）`, over: end < t }; }
+    return { it, label: '次回の施術まで', over: later };
+  });
+}
+function guideFor(menuKey) {
+  const base = latestRecord(menuKey), menu = data.menus[menuKey];
+  if (!base) return { base: null };
+  if (!menu?.interval) return { base, interval: null };
+  const day = addDays(base.day, menu.interval);
+  return { base, interval: menu.interval, day, left: diffDays(todayStr(), day) };
+}
+function menusWithRecords() {
+  const keys = [...new Set(sortedRecords().map(r => r.menuKey))];
+  return keys.filter(k => data.menus[k]).map(k => ({ key: k, ...data.menus[k] }));
+}
+function selectedMenuKey() {
+  const list = menusWithRecords();
+  const saved = pref('menu');
+  if (saved && list.some(m => m.key === saved)) return saved;
+  return latestRecord(null)?.menuKey || list[0]?.key || null;
+}
+function latestLetter() {
+  return [...data.letters].sort((a, b) => a.day === b.day ? b.publishedAt.localeCompare(a.publishedAt) : b.day.localeCompare(a.day))[0] || null;
+}
+function possibleDuplicates(rec) {
+  const differs = (a, b) => { a = (a || '').trim(); b = (b || '').trim(); return a && b && a !== b; };
+  return data.records.filter(o => o.id !== rec.id && o.menuKey === rec.menuKey && o.day === rec.day
+    && !differs(o.area, rec.area) && !differs(o.facility, rec.facility));
+}
+
+// ---------- 画面の切り替え（戻るボタンにも対応） ----------
+let view = { name: 'home' };
+let pendingReceive = null;   // { h, fp, status }
+function go(next, replace = false) {
+  view = next;
+  try { replace ? history.replaceState({ view: next }, '', location.pathname) : history.pushState({ view: next }, '', location.pathname); } catch (e) {}
+  render();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('popstate', e => {
+  // 開いたままのページで別のQRのリンクを開いたときも、# 以降の変化として届く
+  if (hasHandoffHash()) { handleHash(); return; }
+  view = e.state?.view || { name: 'home' }; render();
+});
+window.addEventListener('hashchange', () => { if (hasHandoffHash()) handleHash(); });
+
+function render() {
+  const app = $('#app');
+  const v = view.name;
+  app.innerHTML =
+    v === 'receive' ? receiveView() :
+    v === 'saved' ? savedView() :
+    v === 'records' ? recordsView() :
+    v === 'record' ? recordView(view.id) :
+    v === 'edit' ? editView() :
+    v === 'letters' ? lettersView() :
+    v === 'memo' ? memoView() :
+    v === 'data' ? dataView() :
+    v === 'about' ? aboutView() :
+    homeView();
+  bind();
+}
+
+// ---------- ホーム ----------
+const ICON = {
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 4h14v16H5zM8 9h8M8 13h8M8 17h5"/></svg>',
+  data: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>',
+  back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+};
+function backBar(title, to = { name: 'home' }) {
+  return `<div class="bar"><button type="button" class="back" data-back='${esc(JSON.stringify(to))}' aria-label="戻る">${ICON.back}</button><h2>${esc(title)}</h2></div>`;
+}
+function storageWarning() {
+  return storageOK ? '' : '<p class="notice warn">このブラウザでは保存できない状態です（シークレットモードやサイトデータのブロックなど）。通常のタブで開き直してください。</p>';
+}
+function homeView() {
+  const care = activeCare();
+  const menuKey = selectedMenuKey();
+  const menus = menusWithRecords();
+  const letter = latestLetter();
+  const standalone = matchMedia('(display-mode: standalone)').matches;
+  const hasAny = data.records.length > 0;
+  let html = `
+    <header class="top">
+      <div><h1>Lulucie</h1><p class="sub">私をととのえる、美肌サイクル手帖</p></div>
+      <div class="iconbtns">
+        <button type="button" class="iconbtn" data-go="records"><span class="ic">${ICON.list}</span>記録</button>
+        <button type="button" class="iconbtn" data-go="data"><span class="ic">${ICON.data}</span>データ</button>
+      </div>
+    </header>
+    <div class="stack">${storageWarning()}`;
+
+  if (!hasAny) {
+    html += `<section class="card stack tight">
+      <p class="eyebrow">welcome</p>
+      <h2>今日のケアを、あなたの手帖に。</h2>
+      <p class="muted">サロンで「Android（ウェブ版）」のQRコードを、スマホのカメラで読み取ると、ケアの案内と施術の記録がここに入ります。</p>
+      <p class="muted small">会員登録はいりません。内容はこのスマホのブラウザの中だけに保存され、サロンや外部へは送られません。</p>
+      <div style="margin-top:8px"><button type="button" class="btn outline" data-edit="new">自分で記録する</button></div>
+      <button type="button" class="linkbtn" data-go="about">ウェブ版でできること・できないこと</button>
+    </section>`;
+  }
+
+  if (care) {
+    html += `<section class="card" id="aftercare" aria-labelledby="acTitle">
+      <p class="eyebrow">aftercare</p>
+      <h2 id="acTitle">施術後のケア</h2>
+      <p class="muted small" style="margin:4px 0 6px">${esc(shortLabel(care.record.day))}の${esc(care.record.menuName)}について、${esc(care.record.care.salonName)}からのご案内です。</p>
+      ${care.entries.map(e => {
+        const on = data.checks.includes(e.key);
+        return `<button type="button" class="care-row" data-check="${esc(e.key)}" aria-pressed="${on}"
+                  aria-label="${esc(e.item.t)}、${esc(periodLabel(e))}、${on ? '確認済み' : '未確認'}">
+          <span class="box">${on ? ICON.check : ''}</span>
+          <span><span style="display:block">${esc(e.item.t)}</span>
+          <span class="when">${esc(periodLabel(e))}</span>${on ? `<span class="done">${CHECK_LABEL}</span>` : ''}</span>
+        </button>`; }).join('')}
+      <p class="muted small" style="margin-top:8px">チェックは、案内を読んで確認したしるしです。もう一度押すと外せます。</p>
+      <p class="muted small" style="margin-top:6px">${esc(shortLabel(isoDayOf(care.record.care.receivedAt)))} 受け取り・サロンのQRから取り込んだ案内です。気になる症状がある場合は、担当者に相談してください。</p>
+    </section>`;
+  }
+
+  if (menuKey) {
+    const g = guideFor(menuKey), m = data.menus[menuKey];
+    const ringText = g.day == null ? '' : g.left > 0 ? `<small>あと</small>${g.left}<small>日</small>` : g.left === 0 ? '今日' : `${-g.left}<small>日すぎ</small>`;
+    const caption = g.day == null ? '' : g.left > 0 ? '次回ケアの目安まで' : g.left === 0 ? '次回ケアの目安の日です' : '次回ケアの目安から';
+    const fuLetter = data.letters.filter(l => l.menuKey === menuKey && l.fu).sort((a, b) => b.day.localeCompare(a.day))[0];
+    const fuDay = fuLetter ? addDays(fuLetter.day, fuLetter.fu) : null;
+    html += `<section class="stack tight" aria-labelledby="ritual">
+      <p class="eyebrow center">your ritual</p>
+      ${menus.length > 1 ? `<label class="field center" style="justify-items:center"><span class="small">表示するメニュー</span>
+        <select id="menuPick" style="max-width:320px">${menus.map(x => `<option value="${esc(x.key)}" ${x.key === menuKey ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>`
+        : `<h2 id="ritual" class="center">${esc(m.name)}</h2>`}
+      ${g.day != null ? `<div class="center" style="padding:8px 0"><p class="guide-num">${ringText}</p><p class="muted small">${caption}</p></div>` : ''}
+      <div class="card rows">
+        <div><p class="label">次回ケアの目安</p>
+          ${g.day != null ? `<p class="value">${esc(longLabel(g.day))}</p>
+            <p class="muted small">前回の施術日（${esc(shortLabel(g.base.day))}）＋設定した${g.interval}日から計算。予約日ではありません。</p>`
+            : `<p class="muted">施術間隔が入っていないため、目安はまだありません。</p>`}
+        </div>
+        ${fuDay && fuDay >= todayStr() ? `<div><p class="label" style="color:var(--champagne)">サロンが指定したご案内の日</p>
+          <p class="value">${esc(longLabel(fuDay))}</p>
+          <p class="muted small">ウェブ版では、この日にお知らせ（通知）は届きません。</p></div>` : ''}
+      </div>
+    </section>`;
+  }
+
+  if (letter && (letter.message || letter.nextName || letter.nextNote)) {
+    const long = [...(letter.message || '')].length > LETTER_COLLAPSE;
+    const sign = [letter.salonName || data.profile.salonName, letter.staff].filter(Boolean).join('　');
+    html += `<section class="card letter stack tight" aria-labelledby="letterTitle">
+      <p class="eyebrow">a letter</p>
+      <p id="letterTitle" class="small" style="color:var(--champagne);font-weight:500">担当者からの手紙</p>
+      ${letter.customerName ? `<p class="value">${esc(letter.customerName)} 様</p>` : ''}
+      ${letter.message ? `<p class="body ${long ? 'clamped' : ''}" id="letterBody">${esc(letter.message)}</p>
+        ${long ? `<button type="button" class="linkbtn" id="letterToggle" aria-expanded="false" style="justify-self:start;color:var(--champagne)">全文を読む</button>` : ''}` : ''}
+      ${letter.nextName || letter.nextNote ? `<div><p class="small" style="color:var(--champagne);font-weight:500">次回のご提案</p>
+        ${letter.nextName ? `<p class="value">${esc(letter.nextName)}</p>` : ''}${letter.nextNote ? `<p class="small">${esc(letter.nextNote)}</p>` : ''}</div>` : ''}
+      ${sign ? `<p class="sign">— ${esc(sign)}</p>` : ''}
+    </section>
+    ${data.letters.length > 1 ? `<button type="button" class="linkbtn" data-go="letters" style="justify-self:end;color:var(--champagne)">これまでの手紙（${data.letters.length}通）</button>` : ''}`;
+  }
+
+  if (hasAny) {
+    html += `<section class="stack tight">
+      <p class="small muted">次にすること</p>
+      <button type="button" class="btn outline" data-edit="new">今日の施術を記録する</button>
+      ${data.profile.bookingURL && /^https?:\/\//i.test(data.profile.bookingURL) ? `<a class="btn outline" href="${esc(data.profile.bookingURL)}" target="_blank" rel="noopener noreferrer">サロンの予約ページを開く
+        <span class="subt">${esc(data.profile.salonName || 'サロン')}・予約手続きは外部のページで行います。</span></a>` : ''}
+    </section>`;
+  }
+
+  html += `<section class="card soft stack tight" aria-labelledby="memoTitle">
+      <p class="eyebrow">note for your visit</p>
+      <h2 id="memoTitle">次の来店で伝えたいこと</h2>
+      ${data.memo ? `<p style="white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(data.memo.text)}</p>
+        <button type="button" class="btn outline" id="showMemo">サロンで見せる<span class="subt">画面を大きく表示します</span></button>
+        <button type="button" class="linkbtn" data-go="memo" style="justify-self:start">編集</button>
+        <p class="muted small">${MEMO_NOTE}</p>`
+      : `<p class="muted small">肌の悩みや、次回のご希望をメモしておけます。${MEMO_NOTE}</p>
+        <button type="button" class="btn outline" data-go="memo">＋ メモを書く</button>`}
+    </section>`;
+
+  if (hasAny && !standalone && !pref('installHidden')) {
+    html += `<section class="card stack tight">
+      <h2 style="font-size:1.05rem">ホーム画面に追加すると、アプリのように開けます</h2>
+      <p class="muted small">Chrome の右上の「︙」→「ホーム画面に追加」（または「アプリをインストール」）を押してください。</p>
+      <button type="button" class="linkbtn" id="hideInstall" style="justify-self:start">閉じる</button>
+    </section>`;
+  }
+
+  if (hasAny) {
+    html += `<footer>
+      <p>記録はこのスマホのブラウザの中だけに保存されます。ブラウザのデータを消すと記録も消えるため、「データ」から書き出しておけます。${data.lastExportAt ? `最後に書き出した日時：${esc(timeLabel(data.lastExportAt))}` : ''}</p>
+      <p style="margin-top:8px">目安は記録した日付と設定から計算したもので、肌の状態や施術の効果・安全性を判定するものではありません。</p>
+      <button type="button" class="linkbtn" data-go="about">ウェブ版について</button>
+    </footer>`;
+  }
+  return html + '</div>';
+}
+
+// ---------- 受け取り ----------
+function receiveView() {
+  const r = pendingReceive;
+  if (!r) return backBar('読み取り') + '<p class="muted">読み取る内容がありません。</p>';
+  if (r.error) {
+    return `${backBar('読み取り')}<section class="card stack tight"><h2>受け取れませんでした</h2><p>${esc(r.error)}</p>
+      <p class="muted small">何も保存されていません。</p></section>
+      <div class="pinned"><div><button type="button" class="btn" data-home>ホームへ</button></div></div>`;
+  }
+  const h = r.h, t = todayStr();
+  if (r.status === 'already') {
+    return `${backBar('読み取り')}<section class="card stack tight"><h2>すでに保存しています</h2>
+      <p class="muted">${esc(shortLabel(h.d))}の${esc(h.m.n)}は、このスマホに保存済みです。記録はふえていません。</p></section>
+      <div class="pinned"><div><button type="button" class="btn" data-home>ホームへ</button></div></div>`;
+  }
+  const rows = [
+    ['サロン', esc(h.s.n || '担当サロン')],
+    ['施術日', `${esc(longLabel(h.d))}${h.d === t ? '<br><span class="muted small">今日の施術です</span>' : ''}`],
+    ['施術メニュー', esc(h.m.n)],
+  ];
+  if (h.iv) rows.push(['次回ケアの目安', `${esc(longLabel(addDays(h.d, h.iv)))}<br><span class="muted small">施術日＋設定した${h.iv}日から計算。予約日ではありません。</span>`]);
+  if (h.fu) rows.push(['サロンが指定したご案内の日', `${esc(longLabel(addDays(h.d, h.fu)))}<br><span class="muted small">ウェブ版では、お知らせ（通知）は届きません。</span>`]);
+  return `${backBar('内容の確認')}
+    <div class="stack">
+      <div><p class="eyebrow">from your salon</p><h2>受け取る内容を確認してください</h2></div>
+      ${r.status === 'changed' ? '<p class="notice warn">以前に保存した案内と同じ施術ですが、内容が違います。上書きはしないので、サロンに確認してください。</p>' : ''}
+      ${storageWarning()}
+      <div class="card rows">${rows.map(([k, v]) => `<div><p class="label">${k}</p><p class="value">${v}</p></div>`).join('')}</div>
+      ${h.ac.length ? `<div class="card stack tight"><p class="label">施術後のケア</p>
+        ${h.ac.map(a => `<p><span class="muted small" style="display:inline-block;min-width:4.5em">${careTiming(a)}</span>${esc(a.t)}</p>`).join('')}</div>` : ''}
+      ${h.msg ? `<div class="card letter"><p class="small" style="color:var(--champagne);font-weight:500">担当者からの手紙</p><p class="body clamped">${esc(h.msg)}</p></div>` : ''}
+      <p class="muted small">表示内容はサロンが入力したものです。保存した内容はこのスマホのブラウザの中だけに残り、サロンと自動でつながることはありません。</p>
+      <p class="error" id="saveError" hidden>保存できませんでした。ブラウザの空き容量や設定を確認して、もう一度お試しください。</p>
+    </div>
+    <div class="pinned"><div>
+      ${r.status === 'changed'
+        ? '<button type="button" class="btn outline" data-home>保存せずに閉じる</button>'
+        : `<button type="button" class="btn" id="doReceive">${h.d === t ? '今日のケアを保存する' : 'このケアを保存する'}</button>
+           <button type="button" class="btn outline" data-home>キャンセル</button>`}
+    </div></div>`;
+}
+function receiveNow() {
+  const { h, fp } = pendingReceive;
+  if (receiveStatus(h, fp) !== 'new') { pendingReceive.status = receiveStatus(h, fp); render(); return; }
+  const next = clone(data);
+  const name = h.m.n.trim();
+  let menuKey = Object.keys(next.menus).find(k => (h.m.id && k === h.m.id) || next.menus[k].name === name);
+  if (!menuKey) { menuKey = h.m.id || ('name:' + name); next.menus[menuKey] = { name, interval: null, intervalNote: '' }; }
+  const salonName = (h.s.n || '').trim(), displayName = salonName || '担当サロン';
+  if (h.iv) next.menus[menuKey].interval = h.iv, next.menus[menuKey].intervalNote = `${displayName}からの案内（${shortLabel(h.d)}の施術時）`;
+  const now = new Date().toISOString();
+  const items = h.ac.map(a => ({ id: uuid(), k: a.k, n: a.n, t: a.t.trim() })).filter(a => a.t);
+  next.records.push({ id: uuid(), menuKey, menuName: name, day: h.d, area: '', facility: salonName,
+    memo: `${displayName}から受け取りました`, visitID: h.id, createdAt: now, updatedAt: now,
+    care: { items, receivedAt: now, salonName: displayName } });
+  next.profile = { salonName, staff: (h.s.e || '').trim(), bookingURL: (h.s.u || '').trim() };
+  const nextName = (h.nx?.n || '').trim(), nextNote = (h.nx?.t || '').trim(), msg = (h.msg || '').trim();
+  if (msg || nextName || nextNote || h.fu) {
+    next.letters.push({ visitID: h.id, menuKey, menuName: name, day: h.d, customerName: (h.c || '').trim(),
+      salonName, staff: (h.s.e || '').trim(), message: msg, nextName, nextNote, fu: h.fu, publishedAt: now });
+  }
+  next.received[h.id] = fp;
+  if (!commit(next)) { $('#saveError').hidden = false; return; }
+  pendingReceive = { h, saved: true, menuKey, hasCare: items.length > 0 };
+  go({ name: 'saved' }, true);
+}
+function savedView() {
+  const r = pendingReceive;
+  if (!r?.saved) return homeView();
+  const showCare = !!activeCare();
+  return `<div class="stack" style="padding-top:24px">
+      <p style="color:var(--sage);font-size:2rem" aria-hidden="true">✓</p>
+      <h2 style="font-size:1.5rem">ケアの案内を保存しました。</h2>
+      <p class="muted">${esc(r.h.m.n)}・${esc(longLabel(r.h.d))}</p>
+      <p class="muted">次回もサロンで「Android（ウェブ版）」のQRを読み取ると、記録を追加できます。</p>
+      ${!matchMedia('(display-mode: standalone)').matches ? '<p class="notice small">このページを Chrome の「︙」→「ホーム画面に追加」で置いておくと、次からすぐ開けます。</p>' : ''}
+    </div>
+    <div class="pinned"><div>
+      <button type="button" class="btn" id="seeCare">${showCare ? 'ケアを見る<span class="subt">ホームの「施術後のケア」を表示します</span>' : 'ホームへ'}</button>
+    </div></div>`;
+}
+
+// ---------- 記録 ----------
+function recordsView() {
+  const list = sortedRecords();
+  return `${backBar('記録')}
+    <div class="stack">
+      <button type="button" class="btn outline" data-edit="new">施術を記録する</button>
+      ${list.length ? `<div class="list">${list.map(r => `<button type="button" data-record="${esc(r.id)}">
+          <span><span class="date" style="display:block">${esc(longLabel(r.day))}</span>
+          <span style="display:block">${esc(r.menuName)}</span>
+          ${[r.area, r.facility].filter(Boolean).length ? `<span class="muted small">${esc([r.area, r.facility].filter(Boolean).join('・'))}</span>` : ''}</span>
+          <span class="muted" aria-hidden="true">›</span></button>`).join('')}</div>
+          <p class="muted small">新しい順に表示しています。</p>`
+        : '<p class="muted">まだ記録がありません。</p>'}
+      ${data.letters.length ? `<button type="button" class="btn outline" data-go="letters">これまでの手紙（${data.letters.length}通）</button>` : ''}
+    </div>`;
+}
+function recordView(id) {
+  const r = data.records.find(x => x.id === id);
+  if (!r) return backBar('記録の詳細', { name: 'records' }) + '<p class="muted">この記録はありません。削除された可能性があります。</p>';
+  const lines = receivedLines(r);
+  return `${backBar('記録の詳細', { name: 'records' })}
+    <div class="stack">
+      <h2>${esc(r.menuName)}</h2>
+      <div class="card rows">
+        <div><p class="label">施術日</p><p class="value">${esc(longLabel(r.day))}</p></div>
+        <div><p class="label">部位</p><p>${esc(r.area || '未入力')}</p></div>
+        <div><p class="label">施設名</p><p>${esc(r.facility || '未入力')}</p></div>
+        <div><p class="label">メモ</p><p style="white-space:pre-wrap">${esc(r.memo || 'なし')}</p></div>
+      </div>
+      ${lines ? `<section class="card stack tight" aria-labelledby="rcTitle">
+          <h3 id="rcTitle" style="font-size:1.05rem">この施術で受け取ったケア案内</h3>
+          <p class="muted small">${esc(shortLabel(isoDayOf(r.care.receivedAt)))} 受け取り・${esc(r.care.salonName)}</p>
+          ${lines.length ? lines.map(l => `<div style="border-top:1px solid var(--line);padding-top:8px"><p>${esc(l.it.t)}</p>
+            <p class="small" style="font-weight:500;color:${l.over ? 'var(--stone)' : 'var(--sage)'}">${esc(l.label)}・${l.over ? '期間終了' : '期間中'}</p></div>`).join('')
+            : '<p class="muted">このときのQRには、ケアの案内は含まれていませんでした。</p>'}
+          <p class="muted small">受け取った時点の内容を残しています。いまの案内は、ホームの「施術後のケア」に表示されます。</p>
+        </section>` : ''}
+      <button type="button" class="btn outline" data-edit="${esc(r.id)}">記録を編集する</button>
+      <button type="button" class="linkbtn" id="deleteRecord" data-id="${esc(r.id)}" style="color:var(--rose)">この記録を削除する</button>
+    </div>`;
+}
+// 入力中の内容（画面を作り直しても残す）
+let draft = null;
+function startEdit(id) {
+  if (id === 'new') {
+    const k = selectedMenuKey();
+    draft = { id: uuid(), isNew: true, menuKey: k || '__new', newMenu: '', day: todayStr(), area: '', facility: '', memo: '', dups: null, failed: false, saving: false };
+  } else {
+    const r = data.records.find(x => x.id === id);
+    if (!r) return;
+    draft = { id: r.id, isNew: false, origMenu: r.menuKey, origDay: r.day, menuKey: r.menuKey, newMenu: '', day: r.day, area: r.area, facility: r.facility, memo: r.memo, dups: null, failed: false, saving: false };
+  }
+  go({ name: 'edit' });
+}
+function editView() {
+  if (!draft) return homeView();
+  const keys = Object.keys(data.menus);
+  const d = draft;
+  if (d.dups) {
+    return `${backBar('同じ日の記録があります', { name: 'edit' })}
+      <div class="stack">
+        <p>同じ日・同じメニューの記録がすでにあります。同じ施術を二重に記録していないか、ご確認ください。</p>
+        ${d.dups.map(r => `<div class="card stack tight">
+            <p class="date value">${esc(longLabel(r.day))}</p><p>${esc(r.menuName)}</p>
+            ${[r.area, r.facility].filter(Boolean).length ? `<p class="muted small">${esc([r.area, r.facility].filter(Boolean).join('・'))}</p>` : ''}
+            <p class="small" style="color:var(--sage);font-weight:500">${r.visitID ? 'サロンのQRから受け取った記録' : '手入力した記録'}</p>
+            <button type="button" class="btn outline" data-open-dup="${esc(r.id)}">既存の記録を見る／編集する</button></div>`).join('')}
+        <button type="button" class="btn outline" id="addAnyway">別の施術として追加する<span class="subt">同じ日に、別の部位や別の施設で受けた場合など</span></button>
+        <button type="button" class="btn outline" id="backToInput" style="border-color:transparent">入力に戻る</button>
+      </div>`;
+  }
+  return `${backBar(d.isNew ? '施術を記録' : '記録を編集', d.isNew ? { name: 'home' } : { name: 'record', id: d.id })}
+    <form id="recordForm" class="stack" novalidate>
+      ${d.failed ? '<p class="notice warn">保存できませんでした。入力した内容はそのまま残っています。もう一度「保存する」を押してください。</p>' : ''}
+      <label class="field">施術メニュー
+        <select id="fMenu">${keys.map(k => `<option value="${esc(k)}" ${k === d.menuKey ? 'selected' : ''}>${esc(data.menus[k].name)}</option>`).join('')}
+          <option value="__new" ${d.menuKey === '__new' || !keys.length ? 'selected' : ''}>新しいメニューを入力する</option></select></label>
+      <label class="field" id="fNewWrap" ${d.menuKey === '__new' || !keys.length ? '' : 'hidden'}>メニュー名
+        <input type="text" id="fNewMenu" maxlength="40" value="${esc(d.newMenu)}" placeholder="例：フェイシャル"></label>
+      <label class="field">施術日<input type="date" id="fDay" value="${esc(d.day)}" max="${todayStr()}"></label>
+      <p class="muted small" style="margin-top:-8px">受けた日を記録します。</p>
+      <label class="field">部位（任意）<input type="text" id="fArea" maxlength="40" value="${esc(d.area)}"></label>
+      <label class="field">施設名（任意）<input type="text" id="fFacility" maxlength="60" value="${esc(d.facility)}"></label>
+      <label class="field">メモ（任意）<textarea id="fMemo" maxlength="400" style="min-height:96px">${esc(d.memo)}</textarea></label>
+      <p class="error" id="formError" hidden></p>
+    </form>
+    <div class="pinned"><div><button type="button" class="btn" id="saveRecord">保存する</button></div></div>`;
+}
+function readForm() {
+  const d = draft;
+  d.menuKey = $('#fMenu').value;
+  d.newMenu = $('#fNewMenu').value.trim();
+  d.day = $('#fDay').value;
+  d.area = $('#fArea').value.trim();
+  d.facility = $('#fFacility').value.trim();
+  d.memo = $('#fMemo').value.trim();
+}
+function draftRecord(next) {
+  const d = draft;
+  let key = d.menuKey;
+  if (key === '__new' || !next.menus[key]) {
+    const name = d.newMenu;
+    key = Object.keys(next.menus).find(k => next.menus[k].name === name) || ('name:' + name);
+    if (!next.menus[key]) next.menus[key] = { name, interval: null, intervalNote: '' };
+  }
+  const old = next.records.find(r => r.id === d.id);
+  const now = new Date().toISOString();
+  return Object.assign(old ? clone(old) : { id: d.id, visitID: null, care: null, createdAt: now },
+    { menuKey: key, menuName: next.menus[key].name, day: d.day, area: d.area, facility: d.facility, memo: d.memo, updatedAt: now });
+}
+function attemptSave() {
+  readForm();
+  const err = $('#formError');
+  if ((draft.menuKey === '__new' || !Object.keys(data.menus).length) && !draft.newMenu) { err.textContent = 'メニュー名を入力してください。'; err.hidden = false; return; }
+  if (!parseDay(draft.day) || draft.day > todayStr()) { err.textContent = '施術日は今日までの日付を選んでください。'; err.hidden = false; return; }
+  const rec = draftRecord(clone(data));
+  const needsCheck = draft.isNew ? !data.records.some(r => r.id === draft.id) : (rec.menuKey !== draft.origMenu || rec.day !== draft.origDay);
+  const dups = needsCheck ? possibleDuplicates(rec) : [];
+  if (dups.length) { draft.dups = dups; render(); window.scrollTo(0, 0); return; }
+  saveDraft();
+}
+function saveDraft() {
+  if (draft.saving) return;
+  draft.saving = true;
+  const next = clone(data);
+  const rec = draftRecord(next);
+  const i = next.records.findIndex(r => r.id === rec.id);   // 同じ ID は上書き（連続タップ・再試行で増やさない）
+  if (i >= 0) next.records[i] = rec; else next.records.push(rec);
+  const ok = commit(next);
+  draft.saving = false;
+  if (!ok) { draft.failed = true; draft.dups = null; render(); return; }
+  const id = draft.id; draft = null;
+  go(id ? { name: 'record', id } : { name: 'home' }, true);
+}
+
+// ---------- 手紙・メモ ----------
+function lettersView() {
+  const list = [...data.letters].sort((a, b) => b.day.localeCompare(a.day));
+  return `${backBar('これまでの手紙', { name: 'records' })}
+    <div class="stack">${list.map(l => `<section class="card letter stack tight">
+      <p class="muted small">${esc(longLabel(l.day))}・${esc(l.menuName)}</p>
+      ${l.message ? `<p class="body">${esc(l.message)}</p>` : ''}
+      ${l.nextName || l.nextNote ? `<p class="small"><span style="color:var(--champagne)">次回のご提案：</span>${esc([l.nextName, l.nextNote].filter(Boolean).join('・'))}</p>` : ''}
+      <p class="sign">— ${esc([l.salonName, l.staff].filter(Boolean).join('　'))}</p></section>`).join('') || '<p class="muted">まだ手紙はありません。</p>'}
+    </div>`;
+}
+function memoView() {
+  return `${backBar('メモ')}
+    <div class="stack">
+      <h2>次の来店で伝えたいこと</h2>
+      <label class="field"><span class="sr">メモ</span><textarea id="memoText" maxlength="${MEMO_MAX}" placeholder="例：最近、頬の乾燥が気になる／前回より少し短めに">${esc(data.memo?.text || '')}</textarea></label>
+      <p class="muted small"><span id="memoCount">${[...(data.memo?.text || '')].length}</span>/${MEMO_MAX}</p>
+      <p class="muted small">${MEMO_NOTE}メモはこのスマホのブラウザの中だけに保存されます。体調や服薬、アレルギーなど大切なことは、必ず担当の方に直接伝えてください。</p>
+      <p class="error" id="memoError" hidden>保存できませんでした。もう一度お試しください。</p>
+    </div>
+    <div class="pinned"><div><button type="button" class="btn" id="saveMemo">保存する</button>
+      <button type="button" class="btn outline" data-home>キャンセル</button></div></div>`;
+}
+function showMemo() {
+  $('#overlay').innerHTML = `<div class="showmemo" role="dialog" aria-modal="true" aria-label="お伝えしたいこと">
+    <p class="eyebrow center">お伝えしたいこと</p>
+    <p class="big">${esc(data.memo.text)}</p>
+    <p class="muted small center">${esc(longLabel(isoDayOf(data.memo.updatedAt)))}に書いたメモ</p>
+    <div class="pinned"><div><button type="button" class="btn" id="closeMemo">閉じる</button>
+      <button type="button" class="btn outline" id="clearMemo">伝え終わったので消す</button></div></div></div>`;
+  try { navigator.wakeLock?.request?.('screen').catch(() => {}); } catch (e) {}
+  $('#closeMemo').onclick = () => { $('#overlay').innerHTML = ''; };
+  $('#clearMemo').onclick = () => {
+    if (!confirm('メモを消しますか？')) return;
+    const next = clone(data); next.memo = null;
+    if (commit(next)) { $('#overlay').innerHTML = ''; render(); }
+  };
+  $('#closeMemo').focus();
+}
+
+// ---------- データ（書き出し・読み込み） ----------
+function dataView() {
+  return `${backBar('データ')}
+    <div class="stack">
+      <section class="card stack tight">
+        <h2 style="font-size:1.1rem">データを書き出す</h2>
+        <p class="muted small">記録・受け取ったケア案内・手紙・メモ・チェックを1つのファイルに保存します。自動では保存されないため、ブラウザのデータを消す前や機種変更の前に書き出してください。</p>
+        <p class="small">最後に書き出した日時：${data.lastExportAt ? esc(timeLabel(data.lastExportAt)) : 'まだ書き出していません'}</p>
+        <button type="button" class="btn outline" id="exportBtn">書き出す</button>
+        <p class="error" id="exportError" hidden></p>
+      </section>
+      <section class="card stack tight">
+        <h2 style="font-size:1.1rem">書き出したファイルから戻す</h2>
+        <p class="muted small">戻すと、いまの内容はファイルの内容に置き換わります。読み込めないファイルの場合は、何も変わりません。</p>
+        <label class="btn outline" style="cursor:pointer">ファイルを選ぶ<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+        <p class="small" id="importMsg" hidden></p>
+      </section>
+      <p class="muted small">ウェブ版のファイルは、iPhone のアプリ版とは形式が違うため、行き来はできません。</p>
+    </div>`;
+}
+function exportData() {
+  if (!confirm('ファイルには、施術の記録やケアの案内など美容に関する情報が含まれます。保存先や共有先にご注意ください。書き出しますか？')) return;
+  const now = new Date();
+  const body = JSON.stringify({ format: BACKUP_FORMAT, schemaVersion: 1, exportedAt: now.toISOString(), data: Object.assign(clone(data), { lastExportAt: null }) }, null, 2);
+  try {
+    const url = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `Lulucie-web-backup-${todayStr()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (e) {
+    const el = $('#exportError'); el.textContent = '書き出しできませんでした。'; el.hidden = false; return;
+  }
+  // ダウンロードを始めた日時を残す（保存先での完了まではブラウザから分からない）
+  const next = clone(data); next.lastExportAt = now.toISOString();
+  commit(next); render();
+}
+function validateBackup(obj) {
+  if (!obj || obj.format !== BACKUP_FORMAT) throw new Error('Lulucie ウェブ版のファイルではありません。');
+  if (obj.schemaVersion !== 1) throw new Error('このファイルの形式には対応していません。');
+  const d = obj.data;
+  if (!d || !Array.isArray(d.records) || typeof d.menus !== 'object' || !Array.isArray(d.letters)) throw new Error('ファイルが壊れているため読み込めませんでした。');
+  const ids = new Set();
+  for (const r of d.records) {
+    if (!r || typeof r.id !== 'string' || ids.has(r.id) || !parseDay(r.day) || !d.menus[r.menuKey]) throw new Error('ファイルの内容に問題があるため読み込めませんでした。');
+    ids.add(r.id);
+  }
+  return normalize(d);
+}
+function importData(file) {
+  const msg = $('#importMsg');
+  const show = (t, bad) => { msg.textContent = t; msg.className = 'small' + (bad ? ' error' : ''); msg.hidden = false; };
+  const reader = new FileReader();
+  reader.onerror = () => show('ファイルを開けませんでした。', true);
+  reader.onload = () => {
+    let incoming;
+    try { incoming = validateBackup(JSON.parse(reader.result)); }
+    catch (e) { show(e instanceof SyntaxError ? 'ファイルが壊れているため読み込めませんでした。' : e.message, true); return; }
+    if (!confirm(`ファイル：記録${incoming.records.length}件・手紙${incoming.letters.length}通\n現在：記録${data.records.length}件\n\n現在の内容はすべてファイルの内容に置き換わります。戻しますか？`)) return;
+    incoming.lastExportAt = data.lastExportAt;
+    if (!commit(incoming)) { show('保存できませんでした。現在の内容はそのままです。', true); return; }
+    show('ファイルの内容に戻しました。');
+  };
+  reader.readAsText(file);
+}
+function aboutView() {
+  return `${backBar('ウェブ版について')}
+    <div class="stack">
+      <section class="card stack tight"><h2 style="font-size:1.1rem">できること</h2>
+        <ul class="small" style="margin:0;padding-left:1.2em">
+          <li>サロンのQRコードから、施術の記録・ケアの案内・担当者からの手紙を受け取る</li>
+          <li>次回ケアの目安の日を見る</li>
+          <li>自分で施術を記録する、来店で伝えたいことをメモする</li>
+          <li>データを書き出して、ほかのブラウザやスマホに移す</li></ul></section>
+      <section class="card stack tight"><h2 style="font-size:1.1rem">できないこと</h2>
+        <ul class="small" style="margin:0;padding-left:1.2em">
+          <li>お知らせ（通知）は出ません</li>
+          <li>ホーム画面のウィジェットはありません</li>
+          <li>ブラウザのデータ（サイトデータ）を消すと、記録も消えます</li>
+          <li>Chrome とほかのブラウザなど、ブラウザが違うと記録は共有されません</li></ul></section>
+      <p class="muted small">記録はこのスマホのブラウザの中だけに保存され、サロンや外部へは送信しません。ログイン・広告・アクセス解析はありません。<a href="privacy.html">プライバシーポリシー</a>・<a href="support.html">サポート</a></p>
+    </div>`;
+}
+
+// ---------- 操作 ----------
+function bind() {
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go({ name: b.dataset.go }));
+  document.querySelectorAll('[data-home]').forEach(b => b.onclick = () => { pendingReceive = null; go({ name: 'home' }, true); });
+  document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+    const to = JSON.parse(b.dataset.back);
+    if (view.name === 'edit' && draft?.dups) { draft.dups = null; render(); return; }
+    if (view.name === 'receive') pendingReceive = null;
+    go(to, true);
+  });
+  document.querySelectorAll('[data-record]').forEach(b => b.onclick = () => go({ name: 'record', id: b.dataset.record }));
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => startEdit(b.dataset.edit));
+  document.querySelectorAll('[data-check]').forEach(b => b.onclick = () => {
+    const key = b.dataset.check, next = clone(data);
+    const i = next.checks.indexOf(key);
+    i >= 0 ? next.checks.splice(i, 1) : next.checks.push(key);
+    if (commit(next)) { render(); document.querySelector(`[data-check="${CSS.escape(key)}"]`)?.focus(); }
+  });
+  $('#menuPick')?.addEventListener('change', e => { pref('menu', e.target.value); render(); });
+  const lt = $('#letterToggle');
+  if (lt) lt.onclick = () => {
+    const open = lt.getAttribute('aria-expanded') !== 'true';
+    $('#letterBody').classList.toggle('clamped', !open);
+    lt.setAttribute('aria-expanded', open); lt.textContent = open ? 'たたむ' : '全文を読む';
+  };
+  $('#hideInstall')?.addEventListener('click', () => { pref('installHidden', true); render(); });
+  $('#showMemo')?.addEventListener('click', showMemo);
+  $('#doReceive')?.addEventListener('click', e => { e.currentTarget.disabled = true; receiveNow(); const b = $('#doReceive'); if (b) b.disabled = false; });
+  $('#seeCare')?.addEventListener('click', () => {
+    pendingReceive = null; go({ name: 'home' }, true);
+    const el = $('#aftercare'); if (el) { el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true }); }
+  });
+  // 記録の入力
+  $('#fMenu')?.addEventListener('change', e => { $('#fNewWrap').hidden = e.target.value !== '__new'; });
+  $('#saveRecord')?.addEventListener('click', attemptSave);
+  $('#addAnyway')?.addEventListener('click', () => { draft.dups = null; saveDraft(); });
+  $('#backToInput')?.addEventListener('click', () => { draft.dups = null; render(); });
+  document.querySelectorAll('[data-open-dup]').forEach(b => b.onclick = () => { const id = b.dataset.openDup; draft = null; go({ name: 'record', id }); });
+  $('#deleteRecord')?.addEventListener('click', e => {
+    const id = e.currentTarget.dataset.id;
+    if (!confirm('この記録を削除しますか？削除すると元に戻せません。')) return;
+    const next = clone(data); next.records = next.records.filter(r => r.id !== id);
+    next.checks = next.checks.filter(k => !k.startsWith(id + '|'));
+    if (commit(next)) go({ name: 'records' }, true);
+  });
+  // メモ
+  const mt = $('#memoText');
+  if (mt) {
+    mt.oninput = () => { $('#memoCount').textContent = [...mt.value].length; };
+    $('#saveMemo').onclick = () => {
+      const text = mt.value.trim(), next = clone(data);
+      next.memo = text ? { text, updatedAt: new Date().toISOString() } : null;
+      if (commit(next)) go({ name: 'home' }, true); else $('#memoError').hidden = false;
+    };
+  }
+  // データ
+  $('#exportBtn')?.addEventListener('click', exportData);
+  $('#importFile')?.addEventListener('change', e => { const f = e.target.files?.[0]; if (f) importData(f); e.target.value = ''; });
+}
+
+// ---------- 起動 ----------
+function hasHandoffHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  return p.has('d') || p.has('j');
+}
+let handling = false;
+async function handleHash() {
+  if (handling) return;
+  handling = true;
+  const params = new URLSearchParams(location.hash.slice(1));
+  // 受け取りのデータはアドレスから消しておく（再読み込みや共有で残さない）
+  try { history.replaceState({ view: { name: 'home' } }, '', location.pathname); } catch (e) {}
+  try {
+    const h = await decodeHandoff(params);
+    const fp = await fingerprint(h);
+    pendingReceive = { h, fp, status: receiveStatus(h, fp) };
+  } catch (e) {
+    pendingReceive = { error: e instanceof HandoffError ? e.message : ERR.unreadable };
+  }
+  handling = false;
+  draft = null;
+  go({ name: 'receive' });
+}
+function start() {
+  if (hasHandoffHash()) { handleHash(); return; }
+  try { history.replaceState({ view }, '', location.pathname + location.search); } catch (e) {}
+  render();
+}
+start();
+</script>
+</body>
+</html>

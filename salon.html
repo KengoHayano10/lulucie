@@ -119,6 +119,9 @@
   .overlay { position: fixed; inset: 0; background: rgba(20,20,18,.55); display: grid; place-items: center; z-index: 20;
              padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
   .dialog { background: var(--surface); border-radius: 20px; max-width: 520px; width: 100%; max-height: 100%; overflow: auto; padding: 24px; display: grid; gap: 12px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 999px; background: var(--panel); margin-bottom: 12px; }
+  .seg-btn { border: 0; background: none; border-radius: 999px; padding: 8px 10px; cursor: pointer; color: var(--stone); font-weight: 500; min-height: 44px; }
+  .seg-btn[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
   .qr-box { background: #FFFFFF; border-radius: 12px; padding: 10px; display: grid; place-items: center; }
   .qr-box svg { width: min(100%, 380px); height: auto; display: block; }
   .steps { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
@@ -159,6 +162,12 @@ const STORAGE_KEY = 'lulucie-salon-v1';
 // ★ App Store で公開されたら、ここにお客様アプリの App Store の URL を入れる（例：'https://apps.apple.com/jp/app/id0000000000'）。
 //    空のあいだは「公開前（テスト版の招待で配布中）」と表示し、リンクやQRは出さない。
 const APP_STORE_URL = '';
+// Android のお客様向けウェブ版。記録の中身は # 以降に入れる（# 以降はサーバーへ送られない）
+const WEB_APP_URL = 'https://kengohayano10.github.io/lulucie/web.html';
+function webURLFor(appURL) {
+  const q = String(appURL || '').split('?')[1];
+  return q ? `${WEB_APP_URL}#${q}` : null;
+}
 // お客様アプリ（MenuCatalog）と同じ ID。標準メニューは ID で、それ以外は名前で照合される
 const BUILTIN_MENUS = [
   ['builtin.hydraFacial', '毛穴ハイドラフェイシャル'], ['builtin.herbPeeling', 'ハーブピーリング'],
@@ -339,13 +348,28 @@ function showQR(client, visit) {
           </div>
         </div>
         <div id="qrShow" hidden>
+          <div class="seg" role="group" aria-label="お客様のスマホ">
+            <button type="button" class="seg-btn" data-qr="app" aria-pressed="true">iPhone（アプリ）</button>
+            <button type="button" class="seg-btn" data-qr="web" aria-pressed="false">Android（ウェブ版）</button>
+          </div>
           <div class="qr-box" id="qrBox"></div>
-          <ol class="steps small">
-            <li>お客様に「アプリを開き、『サロンのQRを読み取る』を押してください」とお伝えします。</li>
-            <li>このQRコードを枠に入れて読み取ると、お客様の iPhone に確認画面が出ます。</li>
-            <li>お客様が内容を確かめて「今日のケアを保存する」を押すと、お客様の iPhone に保存されます。</li>
-          </ol>
-          <p class="hint">iPhone のカメラアプリで読み取っても開けます。アプリがまだ入っていない場合は、先に「アプリの案内」の手順で入れてもらってから、もう一度このQRを表示してください。このQRは施術履歴の「QRを表示」からまた出せます。お客様の iPhone に内容が保存されたかは、このページからは分かりません。</p>
+          <div id="qrStepsApp">
+            <ol class="steps small">
+              <li>お客様に「アプリを開き、『サロンのQRを読み取る』を押してください」とお伝えします。</li>
+              <li>このQRコードを枠に入れて読み取ると、お客様の iPhone に確認画面が出ます。</li>
+              <li>お客様が内容を確かめて「今日のケアを保存する」を押すと、お客様の iPhone に保存されます。</li>
+            </ol>
+            <p class="hint">iPhone のカメラアプリで読み取っても開けます。アプリがまだ入っていない場合は、先に「アプリの案内」の手順で入れてもらってから、もう一度このQRを表示してください。</p>
+          </div>
+          <div id="qrStepsWeb" hidden>
+            <ol class="steps small">
+              <li>お客様に「スマホのカメラ（または Google レンズ）で読み取ってください」とお伝えします。アプリのインストールはいりません。</li>
+              <li>開いたページ（Lulucie ウェブ版）で内容を確かめて「今日のケアを保存する」を押すと、お客様のスマホのブラウザに保存されます。</li>
+              <li>初めての方には、Chrome の「︙」→「ホーム画面に追加」で置いておくと次から開きやすいことをお伝えください。</li>
+            </ol>
+            <p class="hint">ウェブ版ではお知らせ（通知）は出ません。ブラウザのデータを消すと記録も消えるため、ウェブ版の「データ」から書き出しておけます。</p>
+          </div>
+          <p class="hint">このQRは施術履歴の「QRを表示」からまた出せます。お客様のスマホに内容が保存されたかは、このページからは分かりません。</p>
           <div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="closeQR2">閉じる</button></div>
         </div>
       </div>
@@ -355,9 +379,18 @@ function showQR(client, visit) {
   document.addEventListener('keydown', onKey);
   $('#closeQR').addEventListener('click', close);
   $('#closeQR2').addEventListener('click', close);
-  $('#revealQR').addEventListener('click', () => {
-    const svg = qrSVG(visit.url);
+  const drawQR = kind => {
+    const text = kind === 'web' ? webURLFor(visit.url) : visit.url;
+    const svg = text ? qrSVG(text) : null;
     $('#qrBox').innerHTML = svg || '<p class="error">QRコードを作る部品を読み込めませんでした。通信の状態を確認して、ページを開き直してください。</p>';
+    $('#qrBox svg')?.setAttribute('aria-label', kind === 'web' ? 'Android のお客様がカメラで読み取るQRコード' : 'お客様アプリで読み取るQRコード');
+    $('#qrStepsApp').hidden = kind === 'web';
+    $('#qrStepsWeb').hidden = kind !== 'web';
+    document.querySelectorAll('[data-qr]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.qr === kind)));
+  };
+  document.querySelectorAll('[data-qr]').forEach(b => b.addEventListener('click', () => drawQR(b.dataset.qr)));
+  $('#revealQR').addEventListener('click', () => {
+    drawQR('app');
     $('#qrCheck').hidden = true;
     $('#qrShow').hidden = false;
     $('#closeQR2').focus();
@@ -395,6 +428,11 @@ function installView() {
         <li>お客様に「アプリを開き、『サロンのQRを読み取る』を押してください」とお伝えします。</li>
       </ol>
       <p class="hint">記録のQRは、そのお客様専用です。アプリを入れてもらうためのQRとして使ったり、店頭に貼ったりしないでください。</p>
+    </div>
+    <div class="card">
+      <h3>Android のお客様</h3>
+      <p class="small" style="margin:0">アプリはありませんが、インストール不要の「ウェブ版」で受け取れます。QRを表示したあと「Android（ウェブ版）」に切り替えて、スマホのカメラで読み取ってもらってください。</p>
+      <p class="hint">ウェブ版ではお知らせ（通知）とウィジェットは使えません。記録はお客様のスマホのブラウザの中に保存されます。</p>
     </div>
     <div class="card">
       <h3>店頭案内文</h3>
