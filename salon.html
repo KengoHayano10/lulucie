@@ -151,6 +151,7 @@
     </nav>
   </header>
   <div id="storageNotice" class="notice warn" hidden></div>
+  <div id="backupNotice" class="notice warn" hidden></div>
   <main id="main"></main>
 </div>
 <div id="overlayRoot"></div>
@@ -285,6 +286,45 @@ function renderStorageNotice() {
   const el = $('#storageNotice');
   el.hidden = storageOK;
   if (!storageOK) el.textContent = 'このブラウザでは保存できない状態です（プライベートブラウズやサイトデータのブロックなど）。ページを閉じると入力内容が消えます。「データ」から書き出して保管してください。';
+}
+
+// ---------- ひかえの催促・カルテが消えたときの案内 ----------
+const BACKUP_REMIND_DAYS = 7;
+function daysSinceExport() {
+  const t = Date.parse(state.lastExportAt || '');
+  return Number.isNaN(t) ? null : Math.floor((Date.now() - t) / 86400000);
+}
+function exportDateLabel() {
+  const t = Date.parse(state.lastExportAt || '');
+  if (Number.isNaN(t)) return 'まだ書き出していません';
+  const d = new Date(t);
+  return `最後に書き出した日：${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+function renderBackupNotice() {
+  const el = $('#backupNotice');
+  const hasReal = state.clients.some(c => !c.isSample);
+  let text = '', canClose = false;
+  if (state.clients.length && !hasReal && !state.restoreHintClosed) {
+    // ブラウザにデータを消されると、はじめてのときと同じサンプルだけの状態に戻る
+    text = '以前このブラウザで使っていた場合は、カルテが消えている可能性があります。新しく入力する前に、ひかえのファイルを読み込んでください。はじめて使う場合は、このお知らせを閉じてください。';
+    canClose = true;
+  } else if (hasReal) {
+    const days = daysSinceExport();
+    if (days === null) text = 'まだひかえを取っていません。カルテはこのブラウザの中だけにあり、消えることがあります。ファイルに書き出して保管してください。';
+    else if (days >= BACKUP_REMIND_DAYS) text = `前回のひかえから${days}日たちました。カルテはこのブラウザの中だけにあり、消えることがあります。ファイルに書き出して保管してください。`;
+  }
+  el.hidden = !text;
+  if (!text) { el.textContent = ''; return; }
+  el.innerHTML = `<p style="margin:0 0 8px">${esc(text)}</p><div class="row">
+    ${ui.view === 'data' ? '' : '<button type="button" class="btn small" id="backupGo">データ画面を開く</button>'}
+    ${canClose ? '<button type="button" class="btn outline small" id="backupClose">閉じる</button>' : ''}</div>`;
+  $('#backupGo')?.addEventListener('click', () => setView('data'));
+  $('#backupClose')?.addEventListener('click', () => { state.restoreHintClosed = true; save(); renderBackupNotice(); });
+}
+function markExported() {
+  state.lastExportAt = new Date().toISOString();
+  save();
+  render();
 }
 
 // ---------- QRコード ----------
@@ -469,6 +509,7 @@ function render() {
   else if (ui.view === 'install') main.innerHTML = installView();
   else main.innerHTML = clientsView();
   bind();
+  renderBackupNotice();
 }
 
 // --- お客様 ---
@@ -709,6 +750,7 @@ function dataView() {
         <label class="btn outline" for="importFile">ファイルから読み込む</label>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
       </div>
+      <p class="muted small" style="margin:0" id="lastExport">${exportDateLabel()}</p>
       <div id="importConfirm" class="notice" hidden></div>
       <p class="error" id="dataError" role="alert"></p>
     </div>
@@ -919,14 +961,15 @@ function bindData() {
       a.download = `lulucie-salon-${today()}.json`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      markExported();
       toast('書き出しました（ダウンロードフォルダを確認してください）');
       return;
     }
-    try { await downloads.save({ filename: `lulucie-salon-${today()}.json`, data: backupText() }); toast('書き出しました'); }
+    try { await downloads.save({ filename: `lulucie-salon-${today()}.json`, data: backupText() }); markExported(); toast('書き出しました'); }
     catch (e) { if (e?.code !== 'declined') err.textContent = 'ファイルに保存できませんでした。「内容をコピー」もお使いいただけます。'; }
   });
   $('#copyData').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(backupText()); toast('コピーしました。メモ帳などに貼り付けて保管してください'); }
+    try { await navigator.clipboard.writeText(backupText()); markExported(); toast('コピーしました。メモ帳などに貼り付けて保管してください'); }
     catch (e) { err.textContent = 'コピーできませんでした。「ファイルに書き出す」をお試しください。'; }
   });
   $('#importFile').addEventListener('change', async e => {
@@ -938,6 +981,7 @@ function bindData() {
       const parsed = JSON.parse(await file.text());
       if (parsed.format !== 'lulucie-salon-backup') throw new Error('format');
       const incoming = normalize(parsed.data);
+      if (typeof parsed.exportedAt === 'string') incoming.lastExportAt = parsed.exportedAt;
       const box = $('#importConfirm');
       box.hidden = false;
       box.innerHTML = `<p style="margin:0 0 8px">「${esc(file.name)}」（お客様 ${incoming.clients.length}名）を読み込みます。今このブラウザにあるデータは置き換わります。</p>
