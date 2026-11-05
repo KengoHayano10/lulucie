@@ -2,11 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-6O2uN/sn70pUAoqMP6LGLy3OskoQA829rl433edY274=' 'sha256-r76nJF6NUYbizHXNrP7pJzIl4TQl6H3GjfQYQfQftCU='; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lulucie Salon</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <script>
 /* qrcode-generator 1.4.4 (MIT License, Kazuhiko Arase) をそのまま組み込み（外部から読み込まないため） */
 //---------------------------------------------------------------------
@@ -2308,6 +2307,10 @@ var qrcode = function() {
 }));
 </script>
 <style>
+  @font-face { font-family: "Shippori Mincho"; font-weight: 500; font-display: swap; src: url("fonts/ShipporiMincho-500.woff2") format("woff2"); }
+  @font-face { font-family: "Zen Kaku Gothic New"; font-weight: 400; font-display: swap; src: url("fonts/ZenKakuGothicNew-400.woff2") format("woff2"); }
+  @font-face { font-family: "Zen Kaku Gothic New"; font-weight: 500; font-display: swap; src: url("fonts/ZenKakuGothicNew-500.woff2") format("woff2"); }
+  @font-face { font-family: "Zen Kaku Gothic New"; font-weight: 700; font-display: swap; src: url("fonts/ZenKakuGothicNew-700.woff2") format("woff2"); }
   body { margin: 0; }
   [hidden] { display: none !important; }
   /* Layout: salon counter tool — client list on the left, the open chart on the right; stacks to one column on phones */
@@ -2821,7 +2824,7 @@ function clientsView() {
   if (!ui.clientId || !clientById(ui.clientId)) ui.clientId = list[0]?.id || null;
   const items = list.map(c => {
     const lv = lastVisit(c);
-    return `<button type="button" class="client" data-client="${c.id}" aria-current="${c.id === ui.clientId}">
+    return `<button type="button" class="client" data-client="${esc(c.id)}" aria-current="${c.id === ui.clientId}">
       <strong>${esc(c.name)} 様 ${c.isSample ? '<span class="pill sample">サンプル</span>' : ''}</strong>
       <span class="muted small">${lv ? `${esc(lv.menuName)}・${dateLabel(lv.date)}` : 'まだ来店記録がありません'}</span>
     </button>`;
@@ -2847,9 +2850,9 @@ function chartView(c) {
   const lv = visits[0];
   const tagButtons = state.tags.map(t => `<button type="button" class="tag" data-tag="${esc(t)}" aria-pressed="${c.tags.includes(t)}">${esc(t)}</button>`).join('');
   const timeline = visits.map(v => `<li>
-      <time datetime="${v.date}">${dateLabel(v.date)}</time>
+      <time datetime="${esc(v.date)}">${dateLabel(v.date)}</time>
       <div><div>${esc(v.menuName)}</div>${v.note ? `<div class="muted small">${esc(v.note)}</div>` : ''}</div>
-      <div>${v.url ? `<button type="button" class="btn outline small" data-qr="${v.id}">QRを表示</button>` : ''}</div>
+      <div>${v.url ? `<button type="button" class="btn outline small" data-qr="${esc(v.id)}">QRを表示</button>` : ''}</div>
     </li>`).join('');
   return `<article class="chart" aria-labelledby="chartName">
     <div class="chart-head">
@@ -2892,7 +2895,7 @@ function chartView(c) {
 function visitForm(c) {
   const menus = state.menus.filter(m => !m.archived);
   const options = (sel, withNone) => (withNone ? '<option value="">（なし）</option>' : '') +
-    menus.map(m => `<option value="${m.id}" ${m.id === sel ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+    menus.map(m => `<option value="${esc(m.id)}" ${m.id === sel ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
   const lv = lastVisit(c);
   const first = lv && menuById(lv.menuId) && !menuById(lv.menuId).archived ? lv.menuId : menus[0]?.id;
   return `<form class="visit" id="visitForm" autocomplete="off" novalidate>
@@ -2939,7 +2942,7 @@ function careRowHTML(item, i) {
   const kinds = CARE_KINDS.map(([k, l]) => `<option value="${k}" ${item.k === k ? 'selected' : ''}>${l}</option>`).join('');
   return `<div class="care-row" data-i="${i}">
     <select aria-label="ケアの時期" data-care="k">${kinds}</select>
-    <input type="number" aria-label="日数" data-care="n" min="2" max="60" value="${item.k === 'p' ? (item.n ?? 3) : ''}" placeholder="日数" ${item.k === 'p' ? '' : 'disabled'}>
+    <input type="number" aria-label="日数" data-care="n" min="2" max="60" value="${item.k === 'p' ? esc(item.n ?? 3) : ''}" placeholder="日数" ${item.k === 'p' ? '' : 'disabled'}>
     <input type="text" aria-label="ケアの内容" data-care="t" maxlength="${LIMIT.text}" value="${esc(item.t)}" placeholder="例：当日はメイクを控えめに">
     <button type="button" class="btn quiet small" data-care-remove aria-label="この項目を削除">削除</button>
   </div>`;
@@ -2978,7 +2981,7 @@ function careErrors(items) {
 
 // --- メニューとケア案内 ---
 function menusView() {
-  const cards = state.menus.map(m => `<article class="menu-card" data-menu="${m.id}">
+  const cards = state.menus.map(m => `<article class="menu-card" data-menu="${esc(m.id)}">
     <header>
       <h3>${esc(m.name)} <span class="pill">${m.builtin ? '標準' : 'サロン独自'}</span> ${m.archived ? '<span class="pill">非表示</span>' : ''}</h3>
       <div class="row">
@@ -2987,8 +2990,8 @@ function menusView() {
       </div>
     </header>
     <div class="grid2">
-      <label class="field"><span>いつもの施術間隔（日）</span><input type="number" data-menu-interval min="1" max="1095" value="${m.interval ?? ''}" placeholder="例：28"></label>
-      <label class="field"><span>いつものフォロー（何日後）</span><input type="number" data-menu-follow min="1" max="1095" value="${m.follow ?? ''}" placeholder="例：21"></label>
+      <label class="field"><span>いつもの施術間隔（日）</span><input type="number" data-menu-interval min="1" max="1095" value="${esc(m.interval)}" placeholder="例：28"></label>
+      <label class="field"><span>いつものフォロー（何日後）</span><input type="number" data-menu-follow min="1" max="1095" value="${esc(m.follow)}" placeholder="例：21"></label>
     </div>
     <div class="field"><span class="muted small">施術後のケア案内</span><p class="hint">1項目は短く（20字くらいまで）。お客さまのウィジェットに1つずつ表示されます。</p><div data-care-root style="display:grid;gap:8px"></div></div>
     <p class="error" data-menu-error role="alert"></p>

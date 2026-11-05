@@ -2,12 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lulucie</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
 <style>
+  @font-face { font-family: "Shippori Mincho"; font-weight: 500; font-display: swap; src: url("fonts/ShipporiMincho-500.woff2") format("woff2"); }
+  @font-face { font-family: "Zen Kaku Gothic New"; font-weight: 400; font-display: swap; src: url("fonts/ZenKakuGothicNew-400.woff2") format("woff2"); }
+  @font-face { font-family: "Zen Kaku Gothic New"; font-weight: 500; font-display: swap; src: url("fonts/ZenKakuGothicNew-500.woff2") format("woff2"); }
+  @font-face { font-family: "Zen Kaku Gothic New"; font-weight: 700; font-display: swap; src: url("fonts/ZenKakuGothicNew-700.woff2") format("woff2"); }
   :root { --bg: #FBF9F6; --ink: #2B2A28; --stone: #6F6A63; --line: rgba(43,42,40,.14); --sage: #5F7466; --champagne: #A88B5E;
           --display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
           --body: "Zen Kaku Gothic New", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; }

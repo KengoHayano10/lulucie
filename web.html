@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mAfkii3O6mCtr+wQCX8125ZFLC7CbS6Ho3b49Al5Big='; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; manifest-src 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FBF9F6">
 <meta name="referrer" content="no-referrer">
@@ -265,6 +266,7 @@ function validate(h) {
   if (typeof h.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(h.id)) throw new HandoffError(ERR.unreadable);
   if (!h.s || typeof h.s.n !== 'string' || !h.m || typeof h.m.n !== 'string' || typeof h.d !== 'string') throw new HandoffError(ERR.unreadable);
   if (![h.s.e, h.s.u, h.s.p, h.c, h.m.id, h.msg, h.nx?.n, h.nx?.t, h.nx?.id].every(isStr)) throw new HandoffError(ERR.unreadable);
+  if (h.m.id === '__proto__' || h.nx?.id === '__proto__') throw new HandoffError(ERR.unreadable);
   if (!parseDay(h.d)) throw new HandoffError(ERR.invalid('施術日'));
   if (!h.m.n.trim()) throw new HandoffError(ERR.invalid('メニュー名'));
   const inRange = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
@@ -465,7 +467,7 @@ function homeView() {
       <div class="card rows">
         <div><p class="label">次回ケアの目安</p>
           ${g.day != null ? `<p class="value">${esc(longLabel(g.day))}</p>
-            <p class="muted small">前回の施術日（${esc(shortLabel(g.base.day))}）＋設定した${g.interval}日から計算。予約日ではありません。</p>`
+            <p class="muted small">前回の施術日（${esc(shortLabel(g.base.day))}）＋設定した${esc(g.interval)}日から計算。予約日ではありません。</p>`
             : `<p class="muted">施術間隔が入っていないため、目安はまだありません。</p>`}
         </div>
         ${fuDay && fuDay >= todayStr() ? `<div><p class="label" style="color:var(--champagne)">サロンが指定したご案内の日</p>
